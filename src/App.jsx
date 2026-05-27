@@ -2139,13 +2139,13 @@ export default function App() {
   };
 
   // ── Family sync ─────────────────────────────────────────────────────────────
-  const exportState = () => btoa(JSON.stringify({
+  const exportState = () => btoa(unescape(encodeURIComponent(JSON.stringify({
     v:1, _ts:Date.now(), checks, packed, rotation, ridden, cruiseDay,
     seenShows, userIntel, heatMode,
-  }));
+  }))));
   const importState = (str) => {
     try {
-      const p = JSON.parse(atob(str.trim()));
+      const p = JSON.parse(decodeURIComponent(escape(atob(str.trim()))));
       if (p.v !== 1) return false;
       if (Array.isArray(p.checks)   && p.checks.length   === TOTAL_CHECK) setChecks(p.checks);
       if (Array.isArray(p.packed)   && p.packed.length   === TOTAL_PACK)  setPacked(p.packed);
