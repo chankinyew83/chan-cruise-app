@@ -1784,14 +1784,12 @@ Rules: Extract ONLY from the provided text. No invention or extrapolation. Skip 
   );
 }
 
-function SyncPanel({ encoded, onImport, onClose, showToast, liveSyncConfig, setLiveSyncConfig, syncStatus }) {
-  const [mode, setMode]               = useState('home'); // home | send | receive | advanced
+function SyncPanel({ encoded, onImport, onClose, showToast }) {
+  const [screen, setScreen]           = useState('home'); // home | send | receive
   const [importStr, setImportStr]     = useState('');
   const [copied, setCopied]           = useState(false);
   const [qrFailed, setQrFailed]       = useState(false);
-  const [importResult, setImportResult] = useState(null); // null | 'ok' | 'fail'
-  const [localGistId, setLocalGistId] = useState(liveSyncConfig?.gistId || '');
-  const [localToken, setLocalToken]   = useState(liveSyncConfig?.token || '');
+  const [importResult, setImportResult] = useState(null);
 
   const copy = async () => {
     try { await navigator.clipboard.writeText(encoded); } catch {}
@@ -1804,25 +1802,13 @@ function SyncPanel({ encoded, onImport, onClose, showToast, liveSyncConfig, setL
     if (ok) setTimeout(() => { setImportResult(null); onClose(); }, 1500);
   };
 
-  const saveLiveSync = () => {
-    setLiveSyncConfig({ gistId: localGistId.trim(), token: localToken.trim(), enabled: true });
-    showToast('⚡ Auto-sync on', 'Both devices now sync every 30 seconds');
-    setMode('home');
-  };
-
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(encoded)}&bgcolor=001220&color=F5C842&margin=10`;
-
-  const inp = {
-    width:'100%', background:'rgba(0,15,40,.8)', border:'1px solid rgba(245,200,66,.2)',
-    borderRadius:'8px', color:'rgba(255,255,255,.75)', fontFamily:"'Nunito',sans-serif",
-    fontSize:'12px', padding:'9px 10px', outline:'none',
-  };
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(encoded)}&bgcolor=001220&color=F5C842&margin=10`;
 
   const backBtn = (
-    <button onClick={() => setMode('home')} style={{
+    <button onClick={() => setScreen('home')} style={{
       background:'none', border:'none', color:'rgba(255,255,255,.4)',
       fontFamily:"'Nunito',sans-serif", fontSize:'12px', cursor:'pointer',
-      padding:'0', marginBottom:'16px', display:'flex', alignItems:'center', gap:'5px',
+      padding:'0 0 16px', display:'block',
     }}>← Back</button>
   );
 
@@ -1832,7 +1818,6 @@ function SyncPanel({ encoded, onImport, onClose, showToast, liveSyncConfig, setL
       width:'100%', maxWidth:'430px', height:'100%',
       background:'rgba(0,8,25,.98)', zIndex:300, display:'flex', flexDirection:'column',
     }}>
-      {/* Header */}
       <div style={{
         padding:'16px 16px 14px', borderBottom:'1px solid rgba(245,200,66,.2)',
         display:'flex', alignItems:'center', gap:'10px',
@@ -1840,10 +1825,7 @@ function SyncPanel({ encoded, onImport, onClose, showToast, liveSyncConfig, setL
       }}>
         <div style={{flex:1}}>
           <div style={{fontFamily:"'Cinzel Decorative','Times New Roman',serif", fontSize:'11px',
-            color:'var(--gold)', letterSpacing:'2px', textTransform:'uppercase'}}>🔄 Keep Both Phones in Sync</div>
-          <div style={{fontSize:'11px', color:'rgba(255,255,255,.4)', marginTop:'2px'}}>
-            Share progress with your partner
-          </div>
+            color:'var(--gold)', letterSpacing:'2px', textTransform:'uppercase'}}>🔄 Sync With Partner</div>
         </div>
         <button onClick={onClose} style={{
           background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.15)',
@@ -1852,206 +1834,136 @@ function SyncPanel({ encoded, onImport, onClose, showToast, liveSyncConfig, setL
         }}>✕</button>
       </div>
 
-      <div style={{flex:1, overflowY:'auto', padding:'18px 16px'}}>
+      <div style={{flex:1, overflowY:'auto', padding:'20px 16px'}}>
 
-        {/* ── HOME ─────────────────────────────────── */}
-        {mode === 'home' && (
+        {/* ── HOME ───────────────────────────── */}
+        {screen === 'home' && (
           <div>
-            <div style={{fontSize:'12px', color:'rgba(255,255,255,.5)', marginBottom:'18px', lineHeight:1.6}}>
-              When one of you checks something off, use this page to share that progress with the other phone.
+            {/* Why explainer */}
+            <div style={{
+              background:'rgba(255,255,255,.05)', borderRadius:'12px',
+              padding:'14px', marginBottom:'20px',
+            }}>
+              <div style={{color:'#fff', fontSize:'13px', fontWeight:800, marginBottom:'8px'}}>
+                Why would I use this?
+              </div>
+              <div style={{color:'rgba(255,255,255,.6)', fontSize:'12px', lineHeight:1.7}}>
+                Both phones have their own copy of the app. If you tick off a packing item on your phone, your partner's phone doesn't automatically know. Use this to share your latest progress so both of you are looking at the same thing.
+              </div>
             </div>
 
-            {/* Option 1: Send */}
-            <button onClick={() => setMode('send')} style={{
-              width:'100%', padding:'16px', borderRadius:'14px', cursor:'pointer',
+            <button onClick={() => setScreen('send')} style={{
+              width:'100%', padding:'18px', borderRadius:'14px', cursor:'pointer',
               background:'rgba(245,200,66,.1)', border:'2px solid rgba(245,200,66,.3)',
               marginBottom:'12px', textAlign:'left', display:'flex', alignItems:'center', gap:'14px',
             }}>
-              <span style={{fontSize:'28px'}}>📤</span>
+              <span style={{fontSize:'30px'}}>📤</span>
               <div>
-                <div style={{color:'var(--gold)', fontFamily:"'Nunito',sans-serif", fontSize:'14px', fontWeight:800}}>
-                  Send my progress to partner
-                </div>
-                <div style={{color:'rgba(255,255,255,.4)', fontSize:'11px', marginTop:'2px', fontFamily:"'Nunito',sans-serif"}}>
-                  Share via WhatsApp · takes 30 seconds
+                <div style={{color:'var(--gold)', fontFamily:"'Nunito',sans-serif",
+                  fontSize:'14px', fontWeight:800}}>Send my progress to partner</div>
+                <div style={{color:'rgba(255,255,255,.4)', fontSize:'11px', marginTop:'3px',
+                  fontFamily:"'Nunito',sans-serif"}}>
+                  I've been making changes — share them
                 </div>
               </div>
             </button>
 
-            {/* Option 2: Receive */}
-            <button onClick={() => setMode('receive')} style={{
-              width:'100%', padding:'16px', borderRadius:'14px', cursor:'pointer',
+            <button onClick={() => setScreen('receive')} style={{
+              width:'100%', padding:'18px', borderRadius:'14px', cursor:'pointer',
               background:'rgba(74,144,217,.1)', border:'2px solid rgba(74,144,217,.3)',
-              marginBottom:'20px', textAlign:'left', display:'flex', alignItems:'center', gap:'14px',
+              textAlign:'left', display:'flex', alignItems:'center', gap:'14px',
             }}>
-              <span style={{fontSize:'28px'}}>📥</span>
+              <span style={{fontSize:'30px'}}>📥</span>
               <div>
-                <div style={{color:'#88bfff', fontFamily:"'Nunito',sans-serif", fontSize:'14px', fontWeight:800}}>
-                  Load partner's progress
-                </div>
-                <div style={{color:'rgba(255,255,255,.4)', fontSize:'11px', marginTop:'2px', fontFamily:"'Nunito',sans-serif"}}>
-                  Paste the code they sent you
+                <div style={{color:'#88bfff', fontFamily:"'Nunito',sans-serif",
+                  fontSize:'14px', fontWeight:800}}>Load partner's progress</div>
+                <div style={{color:'rgba(255,255,255,.4)', fontSize:'11px', marginTop:'3px',
+                  fontFamily:"'Nunito',sans-serif"}}>
+                  My partner sent me something — load it
                 </div>
               </div>
             </button>
-
-            {/* Auto-sync status */}
-            {liveSyncConfig?.enabled ? (
-              <div style={{background:'rgba(45,138,74,.1)', border:'1px solid rgba(45,138,74,.25)',
-                borderRadius:'12px', padding:'13px 14px', marginBottom:'14px',
-                display:'flex', alignItems:'center', gap:'10px'}}>
-                <span style={{fontSize:'20px'}}>🟢</span>
-                <div style={{flex:1}}>
-                  <div style={{color:'#6ddb80', fontSize:'12px', fontWeight:800, fontFamily:"'Nunito',sans-serif"}}>Auto-sync is on</div>
-                  <div style={{color:'rgba(255,255,255,.4)', fontSize:'11px', marginTop:'1px'}}>
-                    {syncStatus?.status === 'synced' && syncStatus?.lastSync
-                      ? `Last synced ${Math.max(0, Math.floor((Date.now() - syncStatus.lastSync) / 60000))}m ago`
-                      : syncStatus?.status === 'syncing' ? 'Syncing now…'
-                      : syncStatus?.status === 'error' ? `Error — check WiFi`
-                      : 'Both phones update automatically every 30 seconds'}
-                  </div>
-                </div>
-                <button onClick={() => setMode('advanced')} style={{
-                  background:'none', border:'none', color:'rgba(255,255,255,.3)',
-                  fontSize:'11px', cursor:'pointer', fontFamily:"'Nunito',sans-serif",
-                }}>Settings</button>
-              </div>
-            ) : (
-              <button onClick={() => setMode('advanced')} style={{
-                width:'100%', padding:'13px', borderRadius:'12px', cursor:'pointer',
-                background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.1)',
-                display:'flex', alignItems:'center', gap:'12px', textAlign:'left',
-              }}>
-                <span style={{fontSize:'20px'}}>⚡</span>
-                <div style={{flex:1}}>
-                  <div style={{color:'rgba(255,255,255,.5)', fontSize:'12px', fontWeight:800, fontFamily:"'Nunito',sans-serif"}}>
-                    Set up automatic sync
-                  </div>
-                  <div style={{color:'rgba(255,255,255,.3)', fontSize:'11px', marginTop:'1px'}}>
-                    Skip the manual step — both phones sync automatically
-                  </div>
-                </div>
-                <span style={{color:'rgba(255,255,255,.2)', fontSize:'12px'}}>→</span>
-              </button>
-            )}
           </div>
         )}
 
-        {/* ── SEND ─────────────────────────────────── */}
-        {mode === 'send' && (
+        {/* ── SEND ───────────────────────────── */}
+        {screen === 'send' && (
           <div>
             {backBtn}
-            <div style={{fontSize:'13px', fontWeight:800, color:'#fff', marginBottom:'5px'}}>Send your progress to your partner</div>
-            <div style={{fontSize:'12px', color:'rgba(255,255,255,.5)', marginBottom:'18px', lineHeight:1.6}}>
-              Step 1 — tap the button below to copy your progress code{'\n'}
-              Step 2 — paste it into a WhatsApp message to your partner{'\n'}
-              Step 3 — your partner opens their app, taps Sync, chooses "Load partner's progress", and pastes it
+            <div style={{color:'#fff', fontSize:'14px', fontWeight:800, marginBottom:'6px'}}>
+              Share your progress
+            </div>
+            <div style={{color:'rgba(255,255,255,.55)', fontSize:'12.5px', lineHeight:1.7, marginBottom:'20px'}}>
+              <strong style={{color:'rgba(255,255,255,.8)'}}>Step 1</strong> — Tap the button below to copy your progress<br/>
+              <strong style={{color:'rgba(255,255,255,.8)'}}>Step 2</strong> — Paste it into a WhatsApp message to your partner<br/>
+              <strong style={{color:'rgba(255,255,255,.8)'}}>Step 3</strong> — Your partner taps Sync → "Load partner's progress" → pastes it in
             </div>
 
             {!qrFailed && (
-              <div style={{textAlign:'center', marginBottom:'14px'}}>
+              <div style={{textAlign:'center', marginBottom:'16px'}}>
                 <img src={qrUrl} alt="Sync QR" onError={() => setQrFailed(true)}
-                  style={{width:180, height:180, borderRadius:'12px',
-                    border:'2px solid rgba(245,200,66,.4)', display:'block', margin:'0 auto 8px'}} />
-                <div style={{fontSize:'10px', color:'rgba(255,255,255,.3)'}}>
-                  Partner can also scan this with their camera
+                  style={{width:160, height:160, borderRadius:'10px', display:'block',
+                    margin:'0 auto 6px', border:'2px solid rgba(245,200,66,.3)'}} />
+                <div style={{fontSize:'10px', color:'rgba(255,255,255,.25)'}}>
+                  Partner can scan this instead of typing
                 </div>
               </div>
             )}
 
             <button onClick={copy} style={{
-              width:'100%', padding:'14px', borderRadius:'12px', cursor:'pointer',
+              width:'100%', padding:'16px', borderRadius:'12px', cursor:'pointer',
               background: copied ? 'rgba(45,138,74,.25)' : 'rgba(245,200,66,.12)',
               border: `2px solid ${copied ? 'rgba(45,138,74,.6)' : 'rgba(245,200,66,.4)'}`,
               color: copied ? '#6ddb80' : 'var(--gold)',
               fontFamily:"'Nunito',sans-serif", fontSize:'14px', fontWeight:800, transition:'all .2s',
-            }}>{copied ? '✅ Copied! Paste it into WhatsApp now' : '📋 Copy my progress code'}</button>
+            }}>{copied ? '✅ Copied! Now paste it into WhatsApp' : '📋 Copy my progress'}</button>
           </div>
         )}
 
-        {/* ── RECEIVE ──────────────────────────────── */}
-        {mode === 'receive' && (
+        {/* ── RECEIVE ────────────────────────── */}
+        {screen === 'receive' && (
           <div>
             {backBtn}
-            <div style={{fontSize:'13px', fontWeight:800, color:'#fff', marginBottom:'5px'}}>Load your partner's progress</div>
-            <div style={{fontSize:'12px', color:'rgba(255,255,255,.5)', marginBottom:'18px', lineHeight:1.6}}>
-              Your partner sent you a long code via WhatsApp. Paste it into the box below and tap the button.
+            <div style={{color:'#fff', fontSize:'14px', fontWeight:800, marginBottom:'6px'}}>
+              Load your partner's progress
+            </div>
+            <div style={{color:'rgba(255,255,255,.55)', fontSize:'12.5px', lineHeight:1.7, marginBottom:'20px'}}>
+              Your partner sent you a long code in WhatsApp. Open WhatsApp, copy that message, then paste it into the box below.
             </div>
 
             <textarea value={importStr} onChange={e => setImportStr(e.target.value)}
               placeholder="Paste the code from your partner here…"
               style={{
-                ...inp, resize:'vertical', minHeight:'100px', lineHeight:1.5, marginBottom:'10px',
+                width:'100%', minHeight:'100px', background:'rgba(0,15,40,.8)',
+                border:'1px solid rgba(74,144,217,.3)', borderRadius:'10px',
+                color:'rgba(255,255,255,.8)', fontFamily:"'Nunito',sans-serif",
+                fontSize:'12px', padding:'11px', outline:'none', resize:'vertical', lineHeight:1.5,
+                marginBottom:'10px',
               }} />
 
             {importResult === 'ok' && (
               <div style={{background:'rgba(45,138,74,.2)', border:'1px solid rgba(45,138,74,.4)',
-                borderRadius:'10px', padding:'12px', marginBottom:'10px',
+                borderRadius:'10px', padding:'14px', marginBottom:'10px',
                 textAlign:'center', color:'#6ddb80', fontWeight:800, fontSize:'13px'}}>
-                ✅ Done! Progress loaded successfully.
+                ✅ Done! Your app now matches your partner's.
               </div>
             )}
             {importResult === 'fail' && (
               <div style={{background:'rgba(196,30,58,.15)', border:'1px solid rgba(196,30,58,.35)',
-                borderRadius:'10px', padding:'12px', marginBottom:'10px',
-                textAlign:'center', color:'#ff8091', fontSize:'12px', lineHeight:1.5}}>
-                ❌ That code didn't work. Make sure you copied the whole thing from WhatsApp — it should be a very long string of letters and numbers.
+                borderRadius:'10px', padding:'14px', marginBottom:'10px',
+                color:'#ff8091', fontSize:'12px', lineHeight:1.6}}>
+                ❌ That didn't work. Make sure you copied the entire message from WhatsApp — it's a very long string of letters and numbers.
               </div>
             )}
 
             <button onClick={doImport} disabled={!importStr.trim()} style={{
-              width:'100%', padding:'14px', borderRadius:'12px',
+              width:'100%', padding:'16px', borderRadius:'12px',
               cursor: importStr.trim() ? 'pointer' : 'default',
               background: importStr.trim() ? 'rgba(74,144,217,.2)' : 'rgba(255,255,255,.04)',
               border: `2px solid ${importStr.trim() ? 'rgba(74,144,217,.5)' : 'rgba(255,255,255,.1)'}`,
               color: importStr.trim() ? '#88bfff' : 'rgba(255,255,255,.2)',
               fontFamily:"'Nunito',sans-serif", fontSize:'14px', fontWeight:800,
-            }}>Load progress onto this phone</button>
-          </div>
-        )}
-
-        {/* ── ADVANCED ─────────────────────────────── */}
-        {mode === 'advanced' && (
-          <div>
-            {backBtn}
-            <div style={{fontSize:'13px', fontWeight:800, color:'#fff', marginBottom:'5px'}}>Automatic sync setup</div>
-            <div style={{fontSize:'12px', color:'rgba(255,255,255,.5)', marginBottom:'18px', lineHeight:1.6}}>
-              Once set up, both phones sync every 30 seconds without any manual steps. You need a GitHub account to set this up (one time only).
-            </div>
-
-            {liveSyncConfig?.enabled && (
-              <div style={{background:'rgba(45,138,74,.1)', border:'1px solid rgba(45,138,74,.25)',
-                borderRadius:'10px', padding:'12px', marginBottom:'16px'}}>
-                <div style={{color:'#6ddb80', fontSize:'12px', fontWeight:800}}>🟢 Auto-sync is currently on</div>
-                <button onClick={() => { setLiveSyncConfig(c => ({...c, enabled:false})); setMode('home'); }}
-                  style={{marginTop:'8px', background:'rgba(196,30,58,.15)', border:'1px solid rgba(196,30,58,.3)',
-                    borderRadius:'6px', padding:'5px 12px', cursor:'pointer', color:'#ff8091',
-                    fontFamily:"'Nunito',sans-serif", fontSize:'11px', fontWeight:800}}>
-                  Turn off auto-sync
-                </button>
-              </div>
-            )}
-
-            <div style={{marginBottom:'10px'}}>
-              <div style={{fontSize:'11px', fontWeight:800, color:'rgba(255,255,255,.5)',
-                letterSpacing:'.5px', textTransform:'uppercase', marginBottom:'5px'}}>GitHub Gist ID</div>
-              <input value={localGistId} onChange={e => setLocalGistId(e.target.value)}
-                placeholder="Paste your Gist ID here" style={inp} />
-            </div>
-            <div style={{marginBottom:'14px'}}>
-              <div style={{fontSize:'11px', fontWeight:800, color:'rgba(255,255,255,.5)',
-                letterSpacing:'.5px', textTransform:'uppercase', marginBottom:'5px'}}>Personal Access Token</div>
-              <input value={localToken} onChange={e => setLocalToken(e.target.value)}
-                type="password" placeholder="Paste your token here" style={inp} />
-            </div>
-            <button onClick={saveLiveSync} disabled={!localGistId.trim() || !localToken.trim()} style={{
-              width:'100%', padding:'13px', borderRadius:'12px',
-              cursor: (localGistId.trim() && localToken.trim()) ? 'pointer' : 'default',
-              background: (localGistId.trim() && localToken.trim()) ? 'rgba(245,200,66,.15)' : 'rgba(255,255,255,.04)',
-              border: `1px solid ${(localGistId.trim() && localToken.trim()) ? 'rgba(245,200,66,.4)' : 'rgba(255,255,255,.1)'}`,
-              color: (localGistId.trim() && localToken.trim()) ? 'var(--gold)' : 'rgba(255,255,255,.2)',
-              fontFamily:"'Nunito',sans-serif", fontSize:'13px', fontWeight:800,
-            }}>Turn on auto-sync</button>
+            }}>Load onto this phone</button>
           </div>
         )}
 
@@ -2059,41 +1971,6 @@ function SyncPanel({ encoded, onImport, onClose, showToast, liveSyncConfig, setL
     </div>
   );
 }
-
-// ─────────────────────────────── LIVE SYNC HELPERS ──────────────────────────
-
-const mergeStates = (local, remote) => {
-  if (!remote || typeof remote !== 'object') return local;
-  // OR-merge: once checked/ridden/seen, stays that way on both devices
-  const mergeOr = (a, b) =>
-    !Array.isArray(b) || b.length !== a.length ? a : a.map((v, i) => v || !!b[i]);
-  const mergeRiddenObj = (a, b) => {
-    if (!b) return a;
-    const r = JSON.parse(JSON.stringify(a));
-    Object.keys(b).forEach(k => {
-      if (r[k]) Object.keys(b[k]).forEach(ride => { r[k][ride] = r[k][ride] || b[k][ride]; });
-    });
-    return r;
-  };
-  const mergeById = (a, b) => {
-    if (!Array.isArray(b)) return a;
-    const ids = new Set(a.map(x => x.id));
-    return [...a, ...b.filter(x => !ids.has(x.id))];
-  };
-  // Last-write-wins for scalar state: newer _ts blob wins
-  const useRemote = (remote._ts || 0) > (local._ts || 0);
-  return {
-    checks:    mergeOr(local.checks, remote.checks),
-    packed:    mergeOr(local.packed, remote.packed),
-    ridden:    mergeRiddenObj(local.ridden, remote.ridden),
-    seenShows: [...new Set([...local.seenShows, ...(remote.seenShows || [])])],
-    userIntel: mergeById(local.userIntel, remote.userIntel),
-    rotation:  useRemote ? remote.rotation  : local.rotation,
-    cruiseDay: useRemote ? remote.cruiseDay : local.cruiseDay,
-    heatMode:  useRemote ? remote.heatMode  : local.heatMode,
-    _ts: Math.max(local._ts || 0, remote._ts || 0),
-  };
-};
 
 // ─────────────────────────────── MAIN APP ────────────────────────────────
 
@@ -2354,9 +2231,6 @@ export default function App() {
             onImport={importState}
             onClose={() => setSyncOpen(false)}
             showToast={showToast}
-            liveSyncConfig={liveSyncConfig}
-            setLiveSyncConfig={setLiveSyncConfig}
-            syncStatus={syncStatus}
           />
         )}
 
