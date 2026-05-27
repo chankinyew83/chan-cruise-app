@@ -108,11 +108,12 @@ body,#root{background:var(--navy);font-family:'Nunito',sans-serif;min-height:100
 
 /* Lists */
 .lst{list-style:none;}
-.lst li{color:var(--text);font-size:12.5px;padding:5px 0;
+.lst li{color:var(--text);font-size:12.5px;padding:6px 0;
   border-bottom:1px solid rgba(255,255,255,.05);
-  display:flex;align-items:flex-start;gap:8px;line-height:1.45;}
+  line-height:1.5;}
 .lst li:last-child{border-bottom:none;}
-.dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.dot{display:inline-block;width:5px;height:5px;border-radius:50%;
+  vertical-align:middle;margin-right:6px;flex-shrink:0;}
 .dg{background:var(--gold);}
 .dr{background:#ff8091;}
 .dbl{background:#88bfff;}
