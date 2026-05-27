@@ -1547,11 +1547,10 @@ Rules: Extract ONLY from the provided text. No invention or extrapolation. Skip 
           method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ text: inputText.trim() }),
         });
-        if (!res.ok) throw new Error(
-          res.status === 500
-            ? 'API key not configured — add ANTHROPIC_API_KEY in Vercel project settings'
-            : `Server error ${res.status}`
-        );
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || `Server error ${res.status}`);
+        }
         data = await res.json();
       } else {
         // Inside Claude — API key injected automatically
@@ -1579,8 +1578,8 @@ Rules: Extract ONLY from the provided text. No invention or extrapolation. Skip 
       }));
       setClaims(safe); setDecisions(new Array(safe.length).fill(null));
       setIdx(0); setMode('reviewing');
-    } catch {
-      setError("Extraction failed — internet required. Ship's free WiFi may not support API calls.");
+    } catch(e) {
+      setError(e.message || "Extraction failed — check internet connection.");
       setMode('idle');
     }
   };
