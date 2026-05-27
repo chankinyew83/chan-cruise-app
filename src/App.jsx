@@ -1530,20 +1530,40 @@ function CaptainsPanel({ setUserIntel, onClose, showToast }) {
   const extract = async () => {
     if (!inputText.trim()) return;
     setMode('extracting'); setError(null);
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-          model:'claude-sonnet-4-20250514', max_tokens:1000,
-          system:`You are a cruise intelligence analyst for Disney Adventure (Singapore). Extract specific actionable factual claims from the passenger report. Return a JSON array ONLY. No prose. No markdown fences.
+    const sysPrompt = `You are a cruise intelligence analyst for Disney Adventure (Singapore). Extract specific actionable factual claims from the passenger report. Return a JSON array ONLY. No prose. No markdown fences.
 
 Each item: {"t":"title 5-8 words","tx":"1-2 sentences present tense specific","conf":"high|medium|low","category":"environment|rides|shows|dining|logistics|characters|navigation|facilities","tags":["tag"]}
 
-Rules: Extract ONLY from the provided text. No invention or extrapolation. Skip vague opinions — specific verifiable facts only. Return [] if no specific facts found.`,
-          messages:[{role:'user', content:inputText.trim()}],
-        })
-      });
-      const data = await res.json();
+Rules: Extract ONLY from the provided text. No invention or extrapolation. Skip vague opinions — specific verifiable facts only. Return [] if no specific facts found.`;
+
+    try {
+      let data;
+      const isStandalone = !window.storage; // true on Vercel, false inside Claude
+
+      if (isStandalone) {
+        // Vercel — API key lives securely on the server
+        const res = await fetch('/api/extract', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ text: inputText.trim() }),
+        });
+        if (!res.ok) throw new Error(
+          res.status === 500
+            ? 'API key not configured — add ANTHROPIC_API_KEY in Vercel project settings'
+            : `Server error ${res.status}`
+        );
+        data = await res.json();
+      } else {
+        // Inside Claude — API key injected automatically
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            model:'claude-sonnet-4-20250514', max_tokens:1000,
+            system: sysPrompt,
+            messages:[{role:'user', content:inputText.trim()}],
+          })
+        });
+        data = await res.json();
+      }
       const raw = data.content?.find(b => b.type==='text')?.text || '[]';
       const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
       if (!Array.isArray(parsed) || parsed.length === 0) {
