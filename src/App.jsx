@@ -1785,11 +1785,280 @@ Rules: Extract ONLY from the provided text. No invention or extrapolation. Skip 
 }
 
 function SyncPanel({ encoded, onImport, onClose, showToast, liveSyncConfig, setLiveSyncConfig, syncStatus }) {
+  const [mode, setMode]               = useState('home'); // home | send | receive | advanced
   const [importStr, setImportStr]     = useState('');
   const [copied, setCopied]           = useState(false);
   const [qrFailed, setQrFailed]       = useState(false);
+  const [importResult, setImportResult] = useState(null); // null | 'ok' | 'fail'
   const [localGistId, setLocalGistId] = useState(liveSyncConfig?.gistId || '');
   const [localToken, setLocalToken]   = useState(liveSyncConfig?.token || '');
+
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(encoded); } catch {}
+    setCopied(true); setTimeout(() => setCopied(false), 3000);
+  };
+
+  const doImport = () => {
+    const ok = onImport(importStr);
+    setImportResult(ok ? 'ok' : 'fail');
+    if (ok) setTimeout(() => { setImportResult(null); onClose(); }, 1500);
+  };
+
+  const saveLiveSync = () => {
+    setLiveSyncConfig({ gistId: localGistId.trim(), token: localToken.trim(), enabled: true });
+    showToast('⚡ Auto-sync on', 'Both devices now sync every 30 seconds');
+    setMode('home');
+  };
+
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(encoded)}&bgcolor=001220&color=F5C842&margin=10`;
+
+  const inp = {
+    width:'100%', background:'rgba(0,15,40,.8)', border:'1px solid rgba(245,200,66,.2)',
+    borderRadius:'8px', color:'rgba(255,255,255,.75)', fontFamily:"'Nunito',sans-serif",
+    fontSize:'12px', padding:'9px 10px', outline:'none',
+  };
+
+  const backBtn = (
+    <button onClick={() => setMode('home')} style={{
+      background:'none', border:'none', color:'rgba(255,255,255,.4)',
+      fontFamily:"'Nunito',sans-serif", fontSize:'12px', cursor:'pointer',
+      padding:'0', marginBottom:'16px', display:'flex', alignItems:'center', gap:'5px',
+    }}>← Back</button>
+  );
+
+  return (
+    <div style={{
+      position:'fixed', top:0, left:'50%', transform:'translateX(-50%)',
+      width:'100%', maxWidth:'430px', height:'100%',
+      background:'rgba(0,8,25,.98)', zIndex:300, display:'flex', flexDirection:'column',
+    }}>
+      {/* Header */}
+      <div style={{
+        padding:'16px 16px 14px', borderBottom:'1px solid rgba(245,200,66,.2)',
+        display:'flex', alignItems:'center', gap:'10px',
+        background:'linear-gradient(145deg,#001f60 0%,#0B3D91 100%)',
+      }}>
+        <div style={{flex:1}}>
+          <div style={{fontFamily:"'Cinzel Decorative','Times New Roman',serif", fontSize:'11px',
+            color:'var(--gold)', letterSpacing:'2px', textTransform:'uppercase'}}>🔄 Keep Both Phones in Sync</div>
+          <div style={{fontSize:'11px', color:'rgba(255,255,255,.4)', marginTop:'2px'}}>
+            Share progress with your partner
+          </div>
+        </div>
+        <button onClick={onClose} style={{
+          background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.15)',
+          borderRadius:'8px', padding:'8px 14px', color:'rgba(255,255,255,.6)',
+          fontSize:'12px', cursor:'pointer', fontFamily:"'Nunito',sans-serif", fontWeight:800,
+        }}>✕</button>
+      </div>
+
+      <div style={{flex:1, overflowY:'auto', padding:'18px 16px'}}>
+
+        {/* ── HOME ─────────────────────────────────── */}
+        {mode === 'home' && (
+          <div>
+            <div style={{fontSize:'12px', color:'rgba(255,255,255,.5)', marginBottom:'18px', lineHeight:1.6}}>
+              When one of you checks something off, use this page to share that progress with the other phone.
+            </div>
+
+            {/* Option 1: Send */}
+            <button onClick={() => setMode('send')} style={{
+              width:'100%', padding:'16px', borderRadius:'14px', cursor:'pointer',
+              background:'rgba(245,200,66,.1)', border:'2px solid rgba(245,200,66,.3)',
+              marginBottom:'12px', textAlign:'left', display:'flex', alignItems:'center', gap:'14px',
+            }}>
+              <span style={{fontSize:'28px'}}>📤</span>
+              <div>
+                <div style={{color:'var(--gold)', fontFamily:"'Nunito',sans-serif", fontSize:'14px', fontWeight:800}}>
+                  Send my progress to partner
+                </div>
+                <div style={{color:'rgba(255,255,255,.4)', fontSize:'11px', marginTop:'2px', fontFamily:"'Nunito',sans-serif"}}>
+                  Share via WhatsApp · takes 30 seconds
+                </div>
+              </div>
+            </button>
+
+            {/* Option 2: Receive */}
+            <button onClick={() => setMode('receive')} style={{
+              width:'100%', padding:'16px', borderRadius:'14px', cursor:'pointer',
+              background:'rgba(74,144,217,.1)', border:'2px solid rgba(74,144,217,.3)',
+              marginBottom:'20px', textAlign:'left', display:'flex', alignItems:'center', gap:'14px',
+            }}>
+              <span style={{fontSize:'28px'}}>📥</span>
+              <div>
+                <div style={{color:'#88bfff', fontFamily:"'Nunito',sans-serif", fontSize:'14px', fontWeight:800}}>
+                  Load partner's progress
+                </div>
+                <div style={{color:'rgba(255,255,255,.4)', fontSize:'11px', marginTop:'2px', fontFamily:"'Nunito',sans-serif"}}>
+                  Paste the code they sent you
+                </div>
+              </div>
+            </button>
+
+            {/* Auto-sync status */}
+            {liveSyncConfig?.enabled ? (
+              <div style={{background:'rgba(45,138,74,.1)', border:'1px solid rgba(45,138,74,.25)',
+                borderRadius:'12px', padding:'13px 14px', marginBottom:'14px',
+                display:'flex', alignItems:'center', gap:'10px'}}>
+                <span style={{fontSize:'20px'}}>🟢</span>
+                <div style={{flex:1}}>
+                  <div style={{color:'#6ddb80', fontSize:'12px', fontWeight:800, fontFamily:"'Nunito',sans-serif"}}>Auto-sync is on</div>
+                  <div style={{color:'rgba(255,255,255,.4)', fontSize:'11px', marginTop:'1px'}}>
+                    {syncStatus?.status === 'synced' && syncStatus?.lastSync
+                      ? `Last synced ${Math.max(0, Math.floor((Date.now() - syncStatus.lastSync) / 60000))}m ago`
+                      : syncStatus?.status === 'syncing' ? 'Syncing now…'
+                      : syncStatus?.status === 'error' ? `Error — check WiFi`
+                      : 'Both phones update automatically every 30 seconds'}
+                  </div>
+                </div>
+                <button onClick={() => setMode('advanced')} style={{
+                  background:'none', border:'none', color:'rgba(255,255,255,.3)',
+                  fontSize:'11px', cursor:'pointer', fontFamily:"'Nunito',sans-serif",
+                }}>Settings</button>
+              </div>
+            ) : (
+              <button onClick={() => setMode('advanced')} style={{
+                width:'100%', padding:'13px', borderRadius:'12px', cursor:'pointer',
+                background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.1)',
+                display:'flex', alignItems:'center', gap:'12px', textAlign:'left',
+              }}>
+                <span style={{fontSize:'20px'}}>⚡</span>
+                <div style={{flex:1}}>
+                  <div style={{color:'rgba(255,255,255,.5)', fontSize:'12px', fontWeight:800, fontFamily:"'Nunito',sans-serif"}}>
+                    Set up automatic sync
+                  </div>
+                  <div style={{color:'rgba(255,255,255,.3)', fontSize:'11px', marginTop:'1px'}}>
+                    Skip the manual step — both phones sync automatically
+                  </div>
+                </div>
+                <span style={{color:'rgba(255,255,255,.2)', fontSize:'12px'}}>→</span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ── SEND ─────────────────────────────────── */}
+        {mode === 'send' && (
+          <div>
+            {backBtn}
+            <div style={{fontSize:'13px', fontWeight:800, color:'#fff', marginBottom:'5px'}}>Send your progress to your partner</div>
+            <div style={{fontSize:'12px', color:'rgba(255,255,255,.5)', marginBottom:'18px', lineHeight:1.6}}>
+              Step 1 — tap the button below to copy your progress code{'\n'}
+              Step 2 — paste it into a WhatsApp message to your partner{'\n'}
+              Step 3 — your partner opens their app, taps Sync, chooses "Load partner's progress", and pastes it
+            </div>
+
+            {!qrFailed && (
+              <div style={{textAlign:'center', marginBottom:'14px'}}>
+                <img src={qrUrl} alt="Sync QR" onError={() => setQrFailed(true)}
+                  style={{width:180, height:180, borderRadius:'12px',
+                    border:'2px solid rgba(245,200,66,.4)', display:'block', margin:'0 auto 8px'}} />
+                <div style={{fontSize:'10px', color:'rgba(255,255,255,.3)'}}>
+                  Partner can also scan this with their camera
+                </div>
+              </div>
+            )}
+
+            <button onClick={copy} style={{
+              width:'100%', padding:'14px', borderRadius:'12px', cursor:'pointer',
+              background: copied ? 'rgba(45,138,74,.25)' : 'rgba(245,200,66,.12)',
+              border: `2px solid ${copied ? 'rgba(45,138,74,.6)' : 'rgba(245,200,66,.4)'}`,
+              color: copied ? '#6ddb80' : 'var(--gold)',
+              fontFamily:"'Nunito',sans-serif", fontSize:'14px', fontWeight:800, transition:'all .2s',
+            }}>{copied ? '✅ Copied! Paste it into WhatsApp now' : '📋 Copy my progress code'}</button>
+          </div>
+        )}
+
+        {/* ── RECEIVE ──────────────────────────────── */}
+        {mode === 'receive' && (
+          <div>
+            {backBtn}
+            <div style={{fontSize:'13px', fontWeight:800, color:'#fff', marginBottom:'5px'}}>Load your partner's progress</div>
+            <div style={{fontSize:'12px', color:'rgba(255,255,255,.5)', marginBottom:'18px', lineHeight:1.6}}>
+              Your partner sent you a long code via WhatsApp. Paste it into the box below and tap the button.
+            </div>
+
+            <textarea value={importStr} onChange={e => setImportStr(e.target.value)}
+              placeholder="Paste the code from your partner here…"
+              style={{
+                ...inp, resize:'vertical', minHeight:'100px', lineHeight:1.5, marginBottom:'10px',
+              }} />
+
+            {importResult === 'ok' && (
+              <div style={{background:'rgba(45,138,74,.2)', border:'1px solid rgba(45,138,74,.4)',
+                borderRadius:'10px', padding:'12px', marginBottom:'10px',
+                textAlign:'center', color:'#6ddb80', fontWeight:800, fontSize:'13px'}}>
+                ✅ Done! Progress loaded successfully.
+              </div>
+            )}
+            {importResult === 'fail' && (
+              <div style={{background:'rgba(196,30,58,.15)', border:'1px solid rgba(196,30,58,.35)',
+                borderRadius:'10px', padding:'12px', marginBottom:'10px',
+                textAlign:'center', color:'#ff8091', fontSize:'12px', lineHeight:1.5}}>
+                ❌ That code didn't work. Make sure you copied the whole thing from WhatsApp — it should be a very long string of letters and numbers.
+              </div>
+            )}
+
+            <button onClick={doImport} disabled={!importStr.trim()} style={{
+              width:'100%', padding:'14px', borderRadius:'12px',
+              cursor: importStr.trim() ? 'pointer' : 'default',
+              background: importStr.trim() ? 'rgba(74,144,217,.2)' : 'rgba(255,255,255,.04)',
+              border: `2px solid ${importStr.trim() ? 'rgba(74,144,217,.5)' : 'rgba(255,255,255,.1)'}`,
+              color: importStr.trim() ? '#88bfff' : 'rgba(255,255,255,.2)',
+              fontFamily:"'Nunito',sans-serif", fontSize:'14px', fontWeight:800,
+            }}>Load progress onto this phone</button>
+          </div>
+        )}
+
+        {/* ── ADVANCED ─────────────────────────────── */}
+        {mode === 'advanced' && (
+          <div>
+            {backBtn}
+            <div style={{fontSize:'13px', fontWeight:800, color:'#fff', marginBottom:'5px'}}>Automatic sync setup</div>
+            <div style={{fontSize:'12px', color:'rgba(255,255,255,.5)', marginBottom:'18px', lineHeight:1.6}}>
+              Once set up, both phones sync every 30 seconds without any manual steps. You need a GitHub account to set this up (one time only).
+            </div>
+
+            {liveSyncConfig?.enabled && (
+              <div style={{background:'rgba(45,138,74,.1)', border:'1px solid rgba(45,138,74,.25)',
+                borderRadius:'10px', padding:'12px', marginBottom:'16px'}}>
+                <div style={{color:'#6ddb80', fontSize:'12px', fontWeight:800}}>🟢 Auto-sync is currently on</div>
+                <button onClick={() => { setLiveSyncConfig(c => ({...c, enabled:false})); setMode('home'); }}
+                  style={{marginTop:'8px', background:'rgba(196,30,58,.15)', border:'1px solid rgba(196,30,58,.3)',
+                    borderRadius:'6px', padding:'5px 12px', cursor:'pointer', color:'#ff8091',
+                    fontFamily:"'Nunito',sans-serif", fontSize:'11px', fontWeight:800}}>
+                  Turn off auto-sync
+                </button>
+              </div>
+            )}
+
+            <div style={{marginBottom:'10px'}}>
+              <div style={{fontSize:'11px', fontWeight:800, color:'rgba(255,255,255,.5)',
+                letterSpacing:'.5px', textTransform:'uppercase', marginBottom:'5px'}}>GitHub Gist ID</div>
+              <input value={localGistId} onChange={e => setLocalGistId(e.target.value)}
+                placeholder="Paste your Gist ID here" style={inp} />
+            </div>
+            <div style={{marginBottom:'14px'}}>
+              <div style={{fontSize:'11px', fontWeight:800, color:'rgba(255,255,255,.5)',
+                letterSpacing:'.5px', textTransform:'uppercase', marginBottom:'5px'}}>Personal Access Token</div>
+              <input value={localToken} onChange={e => setLocalToken(e.target.value)}
+                type="password" placeholder="Paste your token here" style={inp} />
+            </div>
+            <button onClick={saveLiveSync} disabled={!localGistId.trim() || !localToken.trim()} style={{
+              width:'100%', padding:'13px', borderRadius:'12px',
+              cursor: (localGistId.trim() && localToken.trim()) ? 'pointer' : 'default',
+              background: (localGistId.trim() && localToken.trim()) ? 'rgba(245,200,66,.15)' : 'rgba(255,255,255,.04)',
+              border: `1px solid ${(localGistId.trim() && localToken.trim()) ? 'rgba(245,200,66,.4)' : 'rgba(255,255,255,.1)'}`,
+              color: (localGistId.trim() && localToken.trim()) ? 'var(--gold)' : 'rgba(255,255,255,.2)',
+              fontFamily:"'Nunito',sans-serif", fontSize:'13px', fontWeight:800,
+            }}>Turn on auto-sync</button>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
 
   const copy = async () => {
     try { await navigator.clipboard.writeText(encoded); } catch {}
