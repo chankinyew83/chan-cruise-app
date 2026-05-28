@@ -598,7 +598,7 @@ const SCHEDULE = {
     {t:"1015",ev:"Arrive MBCC — drop bags"},
     {t:"1245",ev:"🛳️ BOARD"},
     {t:"1300",ev:"⚡ APP SPRINT — open Navigator now"},
-    {t:"1400",ev:"Set up door magnets"},
+    {t:"1400",ev:"Set up door magnets + leave first Pixie Dusting gifts 🎁"},
     {t:"1430",ev:"Pool + water slides"},
     {t:"1530",ev:"E-Muster via app"},
     {t:"1630",ev:"🎉 Sail Away Party"},
@@ -606,7 +606,7 @@ const SCHEDULE = {
     {t:"2130",ev:"Kids to bed"},
   ],
   2:[
-    {t:"0600",ev:"Early deck walk"},
+    {t:"0600",ev:"Early deck walk · Check fish extender for Pixie Dusting gifts 🎁"},
     {t:"0730",ev:"Family breakfast"},
     {t:"0830",ev:"🎢 Marvel Landing — Ironcycle + rides"},
     {t:"0930",ev:"Oceaneer Club drop"},
@@ -687,13 +687,22 @@ function PackItem({ item, packed, onToggle }) {
   );
 }
 
-function DayCard({ n, cls, title, sub, children }) {
-  const [open, setOpen] = useState(n === 1);
+function DayCard({ n, cls, title, sub, children, defaultOpen = false, isPast = false }) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="card" style={{padding:'11px 12px',marginBottom:'8px'}}>
+    <div className="card" style={{padding:'11px 12px',marginBottom:'8px',
+      opacity: isPast ? 0.65 : 1, transition:'opacity .2s'}}>
       <div className="day-hdr" onClick={() => setOpen(!open)}>
-        <div className={`dnum ${cls}`}>{n}</div>
-        <div className="day-info"><h3>{title}</h3><p>{sub}</p></div>
+        <div className={`dnum ${cls}`} style={{position:'relative'}}>
+          {n}
+          {isPast && <span style={{position:'absolute',top:-3,right:-3,fontSize:'8px',
+            background:'#6ddb80',borderRadius:'50%',width:10,height:10,
+            display:'flex',alignItems:'center',justifyContent:'center',color:'#001220'}}>✓</span>}
+        </div>
+        <div className="day-info">
+          <h3>{title}</h3>
+          <p>{isPast ? '✓ Completed · ' : ''}{sub}</p>
+        </div>
         <div className={`chev ${open ? 'open' : ''}`}>▼</div>
       </div>
       {open && <div className="timeline">{children}</div>}
@@ -838,20 +847,19 @@ function KidsTab({ ridden, setRidden }) {
   const toggleRide = (k, rid) => setRidden(p => ({...p,[k]:{...p[k],[rid]:!p[k][rid]}}));
   const possible = KIDS_DATA.reduce((s,k)=>s+RIDES.filter(r=>r.eligible(HEIGHT_MAP[k.k])).length,0);
   const done = KIDS_DATA.reduce((s,k)=>s+RIDES.filter(r=>ridden[k.k][r.id]).length,0);
+  const [open, setOpen] = useState(null); // null | 'oceaneer' | 'water' | 'characters'
+  const toggle = (id) => setOpen(o => o === id ? null : id);
 
   return (
     <div className="content">
+      {/* ── Ride Tracker ── */}
       <div className="iron-hero">
-        <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'6px'}}>
-          <span style={{fontSize:'24px'}}>⚡</span>
+        <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
+          <span style={{fontSize:'22px'}}>⚡</span>
           <div>
-            <div className="iron-title">MARVEL LANDING MISSION</div>
-            <div className="iron-sub">3 confirmed rides · Deck 19 · All heights verified from official Disney source</div>
+            <div className="iron-title">MARVEL LANDING</div>
+            <div className="iron-sub">Deck 19 · Tap each child to mark a ride done</div>
           </div>
-        </div>
-
-        <div className="hl r" style={{margin:'8px 0 8px',fontSize:'11px'}}>
-          🎢 <strong>Ironcycle Test Run min: 120cm confirmed.</strong> Only 9yo (1.20m) qualifies. BUT your 7yo and 5yo both qualify for Pym Quantum Racers (89cm) and Groot Galaxy Spin (81cm). Tap rides to mark as done.
         </div>
 
         {RIDES.map(ride => (
@@ -862,7 +870,6 @@ function KidsTab({ ridden, setRidden }) {
               <span style={{background:'rgba(245,200,66,.12)',color:'var(--gold)',padding:'1px 7px',
                 borderRadius:'10px',fontSize:'9px',fontWeight:700}}>Min {ride.minStr}</span>
             </div>
-            <div style={{fontSize:'9.5px',color:'rgba(255,255,255,.38)',marginBottom:'5px'}}>{ride.note}</div>
             <div style={{display:'flex',gap:'7px'}}>
               {KIDS_DATA.map(kid => {
                 const ok = ride.eligible(HEIGHT_MAP[kid.k]);
@@ -889,57 +896,68 @@ function KidsTab({ ridden, setRidden }) {
         ))}
 
         <div style={{fontSize:'11px',color:'rgba(255,255,255,.4)',textAlign:'center',marginTop:'6px'}}>
-          {done}/{possible} eligible rides completed
+          {done}/{possible} eligible rides done
         </div>
         <div className="prog"><div className="prog-fill" style={{width:`${possible>0?done/possible*100:0}%`}} /></div>
 
         <ul className="lst" style={{marginTop:'10px'}}>
-          <li><div className="dot dr" /><strong>Ironcycle: 9yo only (120cm exact minimum, confirmed).</strong> 2 per car, inline. Closed-toe secured shoes required.</li>
-          <li><div className="dot dg" /><strong>Pym Quantum Racers + Groot Galaxy Spin: all 3 kids ride.</strong> 5yo (90cm) needs a parent in the car — take turns.</li>
-          <li><div className="dot dbl" /><strong>Book via Navigator app immediately on boarding.</strong> Marvel Landing is the most in-demand area on the ship.</li>
-          <li><div className="dot dg" />Best time: <strong>0830 on any sea day.</strong> Shortest queue of the entire cruise.</li>
-          <li><div className="dot dr" />Ironcycle was not running on the maiden voyage (March 2026) but confirmed operational shortly after. Check Navigator app status on boarding day.</li>
+          <li><strong>Best time: 0830 on any sea day</strong> — shortest queue of the entire cruise.</li>
+          <li><strong>Book via Navigator app immediately on boarding.</strong> Marvel Landing is the most in-demand area on the ship.</li>
+          <li>Ironcycle had downtime on early sailings — check Navigator app status before walking to Deck 19.</li>
         </ul>
       </div>
 
-      {/* Oceaneer Club */}
-      <div className="shdr">🏰 Oceaneer Club (Ages 3–10)</div>
-      <div className="card gc">
-        <div className="card-title">Your 3 Kids' Second Home <span className="badge bgr">Pre-Register in App</span></div>
-        <ul className="lst">
-          <li><div className="dot dgr" />Disney, Pixar, Marvel and Star Wars themed zones. Supervised. Included in your fare.</li>
-          <li><div className="dot dgr" /><strong>Pre-register in Navigator app before boarding</strong> — walk in on Day 1 without queuing.</li>
-          <li><div className="dot dg" /><strong>Kids never want to leave.</strong> Use Oceaneer Club for 1.5–2 hrs of adult time on sea days. Spa, pool, quiet deck.</li>
-          <li><div className="dot dbl" />Check-in and out anytime. Snacks provided. No distress calls.</li>
-        </ul>
-      </div>
-
-      {/* Toy Story Place Water */}
-      <div className="shdr">💦 Toy Story Place — Water Area</div>
-      <div className="card pc">
-        <div className="card-title">🌊 Water Slides + Splash Pads <span className="badge bpu">No AquaMouse here</span></div>
-        <ul className="lst">
-          <li><div className="dot dr" />Disney Adventure does <strong>not</strong> have AquaMouse (that is on Disney Wish/Treasure). The water attraction is Toy Story Place on the upper decks.</li>
-          <li><div className="dot dg" />Toy Story Place has: <strong>large family pool, multiple whirlpools, towering water slides, and interactive splash pads.</strong></li>
-          <li><div className="dot dg" />All 3 kids will thrive here. The splash pads are perfect for the 5yo; the water slides for the 7 and 9yo.</li>
-          <li><div className="dot dbl" />Go at <strong>0800–0900 on sea days</strong> for minimal queues. Gets crowded by 1100.</li>
-          <li><div className="dot dg" /><strong>Pixar Market</strong> is steps away on Deck 17 — easiest lunch on any sea day.</li>
-        </ul>
-      </div>
-
-      {/* Character Meets */}
-      <div className="shdr">⭐ Character Meets — Read This First</div>
-      <div className="card rc">
-        <div className="card-title">⚠️ Selfies at Sea — Hybrid System <span className="badge br">Real Passenger Alert</span></div>
-        <ul className="lst">
-          <li><div className="dot dr" /><strong>Disney Adventure does NOT have traditional character hugs by default.</strong> The system launched as "Selfies at Sea" — distanced photos only, no physical contact. This drew massive backlash.</li>
-          <li><div className="dot dg" />Disney partially rolled back in mid-March 2026. As of latest sailings: <strong>hybrid system</strong> — some sessions are still distanced "Selfies at Sea" via app, others have reverted to walk-up traditional meets with contact.</li>
-          <li><div className="dot dbl" /><strong>Strategy:</strong> Book "Selfies at Sea: Disney Royals" (princesses) and "Disney Pals" (Mickey/Minnie/Donald/Pluto/Goofy) via app on boarding. ALSO ask cast members daily about unscheduled walk-up meets — these have been confirmed to happen.</li>
-          <li><div className="dot dg" />Characters confirmed on board: Mickey, Minnie, Donald, Pluto, Goofy, Duffy + Friends, Moana, Captain Jack Sparrow, Snow White, Jasmine, Rapunzel, Elsa, Belle, and others.</li>
-          <li><div className="dot dg" />Random character wanderings on deck DO happen. Real passengers spotted Donald, Minnie, Ariel, and Duffy friends walking the decks without queues. <strong>Keep the Navigator app open</strong> for live character location alerts.</li>
-          <li><div className="dot dr" />The 5yo's best formal character moment: schedule a "Disney Royals" Selfies at Sea session — princesses in a group setting. Then supplement with whatever walk-up meets appear.</li>
-        </ul>
-      </div>
+      {/* ── Collapsible sections ── */}
+      {[
+        { id:'oceaneer', icon:'🏰', label:'Oceaneer Club', badge:'Ages 3–10 · Included',
+          content: <ul className="lst">
+            <li>Disney, Pixar, Marvel and Star Wars themed zones. Supervised. Included in fare.</li>
+            <li><strong>Pre-register in Navigator app before boarding</strong> — walk in Day 1 without queuing.</li>
+            <li><strong>Kids never want to leave.</strong> Use it for 1.5–2 hrs of adult time on sea days.</li>
+            <li>Check-in and out anytime. Snacks provided.</li>
+          </ul>
+        },
+        { id:'water', icon:'💦', label:'Water Slides', badge:'Toy Story Place · Decks 17–19',
+          content: <ul className="lst">
+            <li>Large family pool, water slides, whirlpools, and splash pads. <strong>Not AquaMouse</strong> — that's on Disney Wish.</li>
+            <li>Splash pads ideal for the 5yo. Water slides for the 7 and 9yo.</li>
+            <li>Go at <strong>0800–0900</strong> on sea days for minimal queues.</li>
+            <li>Pixar Market is steps away on Deck 17 — easiest lunch on sea days.</li>
+          </ul>
+        },
+        { id:'characters', icon:'⭐', label:'Character Meets', badge:'Read before boarding',
+          content: <ul className="lst">
+            <li><strong>Selfies at Sea is the default</strong> — distanced photos, no hugs. Disney partially rolled this back after backlash.</li>
+            <li>As of April 2026: <strong>hybrid system</strong> — some sessions distanced, others reverted to walk-up with contact. Ask cast members each morning.</li>
+            <li>Book "Disney Royals" (princesses) and "Disney Pals" (Mickey/Minnie/Goofy) via Navigator app on boarding day.</li>
+            <li>Characters wander decks unannounced. Keep Navigator app open for live alerts.</li>
+            <li>For the 5yo: "Disney Royals" session + whatever walk-up meets appear.</li>
+          </ul>
+        },
+      ].map(s => (
+        <div key={s.id} style={{marginBottom:'8px'}}>
+          <div onClick={() => toggle(s.id)} style={{
+            display:'flex',alignItems:'center',gap:'10px',
+            background:'linear-gradient(135deg,rgba(11,61,145,.2) 0%,rgba(0,15,45,.45) 100%)',
+            border:'1px solid rgba(245,200,66,.2)',borderRadius:'12px',
+            padding:'12px 13px',cursor:'pointer',
+          }}>
+            <span style={{fontSize:'20px'}}>{s.icon}</span>
+            <div style={{flex:1}}>
+              <div style={{color:'#fff',fontSize:'13px',fontWeight:800}}>{s.label}</div>
+              <div style={{color:'rgba(255,255,255,.35)',fontSize:'10.5px',marginTop:'1px'}}>{s.badge}</div>
+            </div>
+            <span style={{color:'rgba(255,255,255,.3)',fontSize:'11px',transition:'transform .2s',
+              display:'inline-block',transform:open===s.id?'rotate(180deg)':'none'}}>▼</span>
+          </div>
+          {open === s.id && (
+            <div style={{background:'rgba(0,8,25,.5)',border:'1px solid rgba(245,200,66,.15)',
+              borderTop:'none',borderRadius:'0 0 12px 12px',padding:'10px 13px 12px'}}>
+              {s.content}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
@@ -999,13 +1017,18 @@ function NowBar({ cruiseDay, setCruiseDay, heatMode, setHeatMode }) {
     <div style={{
       background: heatMode
         ? 'linear-gradient(135deg,rgba(60,20,0,.5) 0%,rgba(40,10,0,.7) 100%)'
-        : 'linear-gradient(135deg,rgba(11,61,145,.35) 0%,rgba(0,15,45,.6) 100%)',
-      border: `1px solid ${heatMode ? 'rgba(255,100,0,.4)' : 'rgba(245,200,66,.25)'}`,
+        : 'linear-gradient(135deg,rgba(0,30,40,.6) 0%,rgba(0,15,30,.8) 100%)',
+      border: `1px solid ${heatMode ? 'rgba(255,100,0,.4)' : 'rgba(0,212,170,.35)'}`,
       borderRadius:'12px',padding:'11px 13px',marginBottom:'12px',transition:'all .3s',
     }}>
       {/* Day selector + clock + heat toggle */}
       <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'9px'}}>
-        <span style={{fontSize:'10px',fontWeight:800,color:'rgba(255,255,255,.4)',letterSpacing:'1px',textTransform:'uppercase'}}>Day</span>
+        <span style={{
+          fontSize:'8px',fontWeight:800,letterSpacing:'1.5px',
+          color:'#00d4aa',background:'rgba(0,212,170,.12)',
+          border:'1px solid rgba(0,212,170,.3)',borderRadius:'4px',
+          padding:'2px 6px',flexShrink:0,
+        }}>● LIVE</span>
         {[1,2,3,4,5].map(d => (
           <button key={d} onClick={() => setCruiseDay(d)} style={{
             width:'32px',height:'32px',borderRadius:'50%',border:'none',cursor:'pointer',
@@ -1088,13 +1111,28 @@ function NowBar({ cruiseDay, setCruiseDay, heatMode, setHeatMode }) {
 }
 
 function DaysTab({ cruiseDay, setCruiseDay, heatMode, setHeatMode }) {
+  // Sort: current day first, future days next, past days at bottom collapsed
+  const DAY_ORDER = [
+    cruiseDay,
+    ...[1,2,3,4,5].filter(d => d > cruiseDay),
+    ...[1,2,3,4,5].filter(d => d < cruiseDay).reverse(),
+  ];
   return (
     <div className="content">
       <NowBar cruiseDay={cruiseDay} setCruiseDay={setCruiseDay} heatMode={heatMode} setHeatMode={setHeatMode} />
+      <div style={{
+        display:'flex', alignItems:'center', gap:'8px', margin:'4px 0 10px',
+      }}>
+        <div style={{height:'1px', flex:1, background:'rgba(255,255,255,.08)'}} />
+        <span style={{fontSize:'9px', fontWeight:800, color:'rgba(255,255,255,.25)',
+          letterSpacing:'2px', textTransform:'uppercase'}}>Full Plan</span>
+        <div style={{height:'1px', flex:1, background:'rgba(255,255,255,.08)'}} />
+      </div>
       <div className="hl r" style={{marginBottom:'10px'}}>
         🌊 4 nights · ALL sea days · No ports. Light meal at home before boarding — do not rely on the ship for your first meal.
       </div>
-      <DayCard n={1} cls="dn1" title="🛳️ Embarkation" sub="Board 1245 · First 15 min = gold">
+      <DayCard n={1} cls="dn1" title="🛳️ Embarkation" sub="Board 1245 · First 15 min = gold"
+        defaultOpen={cruiseDay===1} isPast={cruiseDay>1}>
         <TB t="0600" tx="Wake. Patch behind ear NOW — Scopoderm or Kwells. Takes 2hrs to kick in. Non-negotiable." type="cr" note="Do not skip" nc="tr" />
         <TB t="0800" tx="Light meal at home (brunch). Boarding buffet is chaos — arrive fed, not hungry." note="Pre-board feed" nc="tg" />
         <TB t="0915" tx="Book GrabXL now (7-seater). Family of 5 + 4-night luggage will not fit a regular GrabCar." type="cr" note="GrabXL only" nc="tr" />
@@ -1114,7 +1152,8 @@ function DaysTab({ cruiseDay, setCruiseDay, heatMode, setHeatMode }) {
         <TB t="2130" tx="Kids to bed. Deck 13 blackout curtains = nuclear dark. They sleep well." />
       </DayCard>
 
-      <DayCard n={2} cls="dn2" title="🌊 Sea Day 1" sub="Iron Cycle · Characters · Shows">
+      <DayCard n={2} cls="dn2" title="🌊 Sea Day 1" sub="Iron Cycle · Characters · Shows"
+        defaultOpen={cruiseDay===2} isPast={cruiseDay>2}>
         <TB t="0600" tx="Wake early. Deck walk 0600–0700 = golden light, zero people, pure ship magic. Use the in-cabin Bacha kettle first — saves queuing." type="te" note="Secret window" nc="tt" />
         <TB t="0730" tx="Family breakfast — main dining room for the sit-down experience." />
         <TB t="0830" tx="🎢 MARVEL LANDING — go now. Ironcycle (9yo only), Pym Quantum Racers and Groot Galaxy Spin (all 3 kids). 0830 is the lowest-queue window of the entire cruise." type="cr" note="Lowest queue window" nc="tr" />
@@ -1129,7 +1168,8 @@ function DaysTab({ cruiseDay, setCruiseDay, heatMode, setHeatMode }) {
         <TB t="2130" tx="Kids to bed. Order room service breakfast via app for tomorrow (free — tip only)." />
       </DayCard>
 
-      <DayCard n={3} cls="dn3" title="🏴‍☠️ Sea Day 2" sub="Pirate prep · Rest HARD · Lion King fireworks at sea">
+      <DayCard n={3} cls="dn3" title="🏴‍☠️ Sea Day 2" sub="Pirate prep · Rest HARD · Lion King fireworks at sea"
+        defaultOpen={cruiseDay===3} isPast={cruiseDay>3}>
         <TB t="0600" tx="Wake. Second sea day — kids are in full cruise rhythm now." />
         <TB t="0700" tx="Breakfast. Let the kids pick." />
         <TB t="0800" tx="Water slides at Toy Story Place — before the heat hits. Earliest queue of the day." type="te" note="Beat the heat" nc="tt" />
@@ -1147,7 +1187,8 @@ function DaysTab({ cruiseDay, setCruiseDay, heatMode, setHeatMode }) {
         <TB t="2130" tx="Kids crash immediately. You: quiet drink at Wayfinder Bay." />
       </DayCard>
 
-      <DayCard n={4} cls="dn4" title="✨ Sea Day 3" sub="Shop early · BBB · Farewell magic">
+      <DayCard n={4} cls="dn4" title="✨ Sea Day 3" sub="Shop early · BBB · Farewell magic"
+        defaultOpen={cruiseDay===4} isPast={cruiseDay>4}>
         <TB t="0600" tx="Final early deck walk. Last morning at sea. This one hits differently — savour it." type="te" />
         <TB t="0700" tx="Breakfast. Slow morning. Let the kids feel it." />
         <TB t="0800" tx="🛍️ SHOP NOW. Ship-exclusive merch sells out on the last sea day. Mickey ears, Spirit Jerseys (kids' sizes go first), Dooney bags, pin sets. First pick." type="cr" note="Go early" nc="tr" />
@@ -1164,7 +1205,8 @@ function DaysTab({ cruiseDay, setCruiseDay, heatMode, setHeatMode }) {
         <TB t="2200" tx="BAGS OUT. Outside cabin door. Hard deadline." type="cr" note="Hard deadline" nc="tr" />
       </DayCard>
 
-      <DayCard n={5} cls="dn5" title="🌅 Disembarkation" sub="Home to Macpherson · Mission complete">
+      <DayCard n={5} cls="dn5" title="🌅 Disembarkation" sub="Home to Macpherson · Mission complete"
+        defaultOpen={cruiseDay===5} isPast={false}>
         <TB t="0600" tx="Wake. Breakfast at Pixar Market — room key still works until you physically leave the ship." type="te" />
         <TB t="0730" tx="Head to disembarkation lounge. Check Navigator app for your colour/zone assignment." />
         <TB t="0830" tx="Disembark. Collect labelled bags at terminal. Clear customs." />
@@ -1323,14 +1365,16 @@ function SecretsTab({ userIntel = [] }) {
   const daysOld = (dateStr) => dateStr
     ? Math.floor((today - new Date(dateStr).getTime()) / 86400000)
     : null;
+  const [expanded, setExpanded] = useState({});
+  const toggle = (id) => setExpanded(p => ({...p,[id]:!p[id]}));
 
   return (
     <div className="content">
       <div className="hl" style={{marginBottom:'10px'}}>
-        💎 These are what the average tourist misses. Read this tab once, remember it always.
+        💎 Tap any gem to read it. These are what the average tourist misses.
       </div>
 
-      {/* ── User Intel (Captain's Mode additions) ─────────────────── */}
+      {/* ── User Intel ── */}
       {userIntel.length > 0 && (
         <>
           <div className="shdr" style={{marginBottom:'8px'}}>⚓ Your Intel</div>
@@ -1338,56 +1382,62 @@ function SecretsTab({ userIntel = [] }) {
             const c = CONF[g.conf] || CONF.unverified;
             const age = daysOld(g.verified_date);
             const stale = age !== null && age > (g.stale_after_days || 60);
+            const isOpen = !!expanded[`ui_${i}`];
             return (
-              <div key={g.id || i} style={{
+              <div key={g.id || i} onClick={() => toggle(`ui_${i}`)} style={{
                 background:'linear-gradient(135deg,rgba(20,8,50,.5) 0%,rgba(8,4,28,.7) 100%)',
                 border:'1px solid rgba(124,58,237,.28)',borderRadius:'12px',
-                padding:'12px 13px',marginBottom:'9px',position:'relative',overflow:'hidden',
+                padding:'11px 13px',marginBottom:'8px',cursor:'pointer',
               }}>
-                <div style={{display:'flex',alignItems:'center',gap:'7px',marginBottom:'5px',flexWrap:'wrap'}}>
-                  <div style={{color:'#c4b5fd',fontSize:'13px',fontWeight:700}}>⚓ {g.t}</div>
+                <div style={{display:'flex',alignItems:'center',gap:'7px',flexWrap:'wrap'}}>
+                  <div style={{color:'#c4b5fd',fontSize:'13px',fontWeight:700,flex:1}}>⚓ {g.t}</div>
                   <span style={{fontSize:'9px',fontWeight:700,padding:'2px 7px',borderRadius:'10px',
-                    letterSpacing:'.5px',color:c.color,background:c.bg,border:`1px solid ${c.border}`,
-                    whiteSpace:'nowrap'}}>{c.icon} {c.label}</span>
+                    color:c.color,background:c.bg,border:`1px solid ${c.border}`,whiteSpace:'nowrap'}}>
+                    {c.icon} {c.label}</span>
                   {stale && <span style={{fontSize:'9px',fontWeight:700,padding:'2px 7px',borderRadius:'10px',
-                    color:'#ffb347',background:'rgba(180,100,0,.15)',border:'1px solid rgba(180,100,0,.3)',
-                    whiteSpace:'nowrap'}}>⚠️ {age}d old</span>}
+                    color:'#ffb347',background:'rgba(180,100,0,.15)',border:'1px solid rgba(180,100,0,.3)'}}>⚠️</span>}
+                  <span style={{color:'rgba(255,255,255,.25)',fontSize:'10px'}}>{isOpen?'▲':'▼'}</span>
                 </div>
-                <div style={{color:'rgba(255,255,255,.72)',fontSize:'12px',lineHeight:1.5}}>{g.tx}</div>
-                <div style={{fontSize:'10px',color:'rgba(255,255,255,.22)',marginTop:'5px'}}>
-                  {g.src} · added {g.verified_date}
-                </div>
+                {isOpen && <>
+                  <div style={{color:'rgba(255,255,255,.72)',fontSize:'12px',lineHeight:1.5,marginTop:'8px'}}>{g.tx}</div>
+                  <div style={{fontSize:'10px',color:'rgba(255,255,255,.22)',marginTop:'5px'}}>{g.src} · {g.verified_date}</div>
+                </>}
               </div>
             );
           })}
         </>
       )}
 
-      {/* ── Core GEMS ─────────────────────────────────────────────── */}
+      {/* ── Core GEMS ── */}
       {GEMS.map((g, i) => {
         const c = CONF[g.conf] || CONF.unverified;
         const age = daysOld(g.verified_date);
         const stale = age !== null && age > g.stale_after_days;
+        const isOpen = !!expanded[g.id];
         return (
-          <div key={g.id} className="gem" data-n={String(i+1).padStart(2,'0')}>
-            <div style={{display:'flex',alignItems:'center',gap:'7px',marginBottom:'5px',flexWrap:'wrap'}}>
-              <div className="gem-title" style={{margin:0}}>✦ {g.t}</div>
+          <div key={g.id} onClick={() => toggle(g.id)} className="gem"
+            data-n={String(i+1).padStart(2,'0')} style={{cursor:'pointer'}}>
+            <div style={{display:'flex',alignItems:'center',gap:'7px',flexWrap:'wrap'}}>
+              <div className="gem-title" style={{margin:0,flex:1}}>✦ {g.t}</div>
               <span style={{fontSize:'9px',fontWeight:700,padding:'2px 7px',borderRadius:'10px',
                 letterSpacing:'.5px',color:c.color,background:c.bg,border:`1px solid ${c.border}`,
                 whiteSpace:'nowrap'}}>{c.icon} {c.label}</span>
               {stale && <span style={{fontSize:'9px',fontWeight:700,padding:'2px 7px',borderRadius:'10px',
                 color:'#ffb347',background:'rgba(180,100,0,.15)',border:'1px solid rgba(180,100,0,.3)',
-                whiteSpace:'nowrap'}}>⚠️ May be outdated</span>}
+                whiteSpace:'nowrap'}}>⚠️</span>}
+              <span style={{color:'rgba(255,255,255,.25)',fontSize:'10px'}}>{isOpen?'▲':'▼'}</span>
             </div>
-            <div className="gem-text" dangerouslySetInnerHTML={{__html:g.tx}} />
-            <div style={{display:'flex',gap:'6px',flexWrap:'wrap',marginTop:'5px',alignItems:'center'}}>
-              <div style={{fontSize:'10px',color:'rgba(255,255,255,.25)'}}>Source: {g.src}</div>
-              {g.tags?.length > 0 && g.tags.map(tag => (
-                <span key={tag} style={{fontSize:'9px',color:'rgba(255,255,255,.2)',
-                  background:'rgba(255,255,255,.04)',borderRadius:'6px',padding:'1px 6px',
-                  border:'1px solid rgba(255,255,255,.07)'}}>#{tag}</span>
-              ))}
-            </div>
+            {isOpen && <>
+              <div className="gem-text" style={{marginTop:'8px'}} dangerouslySetInnerHTML={{__html:g.tx}} />
+              <div style={{display:'flex',gap:'6px',flexWrap:'wrap',marginTop:'6px',alignItems:'center'}}>
+                <div style={{fontSize:'10px',color:'rgba(255,255,255,.25)'}}>Source: {g.src}</div>
+                {g.tags?.map(tag=>(
+                  <span key={tag} style={{fontSize:'9px',color:'rgba(255,255,255,.2)',
+                    background:'rgba(255,255,255,.04)',borderRadius:'6px',padding:'1px 6px',
+                    border:'1px solid rgba(255,255,255,.07)'}}>#{tag}</span>
+                ))}
+              </div>
+            </>}
           </div>
         );
       })}
@@ -1848,7 +1898,7 @@ function SyncPanel({ encoded, onImport, onClose, showToast }) {
                 Why would I use this?
               </div>
               <div style={{color:'rgba(255,255,255,.6)', fontSize:'12px', lineHeight:1.7}}>
-                Both phones have their own copy of the app. If you tick off a packing item on your phone, your partner's phone doesn't automatically know. Use this to share your latest progress so both of you are looking at the same thing.
+                If you tick off packing items, mark a show as seen, or set the dining plan — your partner's phone doesn't automatically know. Use this to share those updates so you're both looking at the same thing.
               </div>
             </div>
 
@@ -1860,10 +1910,10 @@ function SyncPanel({ encoded, onImport, onClose, showToast }) {
               <span style={{fontSize:'30px'}}>📤</span>
               <div>
                 <div style={{color:'var(--gold)', fontFamily:"'Nunito',sans-serif",
-                  fontSize:'14px', fontWeight:800}}>Send my progress to partner</div>
+                  fontSize:'14px', fontWeight:800}}>Send my updates to partner</div>
                 <div style={{color:'rgba(255,255,255,.4)', fontSize:'11px', marginTop:'3px',
                   fontFamily:"'Nunito',sans-serif"}}>
-                  I've been making changes — share them
+                  Share packing, checklist &amp; dining plan
                 </div>
               </div>
             </button>
@@ -1876,10 +1926,10 @@ function SyncPanel({ encoded, onImport, onClose, showToast }) {
               <span style={{fontSize:'30px'}}>📥</span>
               <div>
                 <div style={{color:'#88bfff', fontFamily:"'Nunito',sans-serif",
-                  fontSize:'14px', fontWeight:800}}>Load partner's progress</div>
+                  fontSize:'14px', fontWeight:800}}>Load my partner's updates</div>
                 <div style={{color:'rgba(255,255,255,.4)', fontSize:'11px', marginTop:'3px',
                   fontFamily:"'Nunito',sans-serif"}}>
-                  My partner sent me something — load it
+                  They sent me a code — load their changes here
                 </div>
               </div>
             </button>
@@ -1975,12 +2025,12 @@ function SyncPanel({ encoded, onImport, onClose, showToast }) {
 // ─────────────────────────────── MAIN APP ────────────────────────────────
 
 const TABS = [
-  {id:'kids',icon:'🎡',label:'Kids'},
-  {id:'tasks',icon:'✅',label:'Tasks'},
-  {id:'days',icon:'📅',label:'Days'},
+  {id:'days',  icon:'📅',label:'Days'},
+  {id:'tasks', icon:'✅',label:'Tasks'},
+  {id:'rides', icon:'🎢',label:'Rides'},
   {id:'dining',icon:'🍽️',label:'Dining'},
-  {id:'shows',icon:'🎭',label:'Shows'},
-  {id:'pack',icon:'🎒',label:'Pack'},
+  {id:'shows', icon:'🎭',label:'Shows'},
+  {id:'pack',  icon:'🎒',label:'Pack'},
   {id:'secrets',icon:'💎',label:'Secrets'},
 ];
 
@@ -1994,7 +2044,7 @@ export default function App() {
     return o;
   })();
 
-  const [tab, setTab] = useState('kids');
+  const [tab, setTab] = useState('days');
   const [checks, setChecks] = useState(Array(TOTAL_CHECK).fill(false));
   const [packed, setPacked] = useState(Array(TOTAL_PACK).fill(false));
   const [rotation, setRotation] = useState(['','','','']);
@@ -2009,7 +2059,6 @@ export default function App() {
   const [captainOpen, setCaptainOpen] = useState(false);
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [toast, setToast] = useState(null);
-  const touchStartY = useRef(null);
   const scrollRef = useRef(null);
   const heroLongPressTimer = useRef(null);
   const stateRef = useRef({});
@@ -2098,7 +2147,7 @@ export default function App() {
     setTimeout(() => setToast(null), 5000);
   };
 
-  // ── Pull-to-refresh: deterministic gem by calendar day (no API) ─────────────
+  // ── Gem of the day — deterministic, no API ─────────────────────────────────
   const showGemOfDay = () => {
     const gem = GEMS[Math.floor(Date.now() / 86400000) % GEMS.length];
     const txt = gem.tx.replace(/<[^>]*>/g, '');
@@ -2126,20 +2175,6 @@ export default function App() {
     } catch { return false; }
   };
 
-  const onTouchStart = (e) => {
-    if (scrollRef.current?.scrollTop === 0) {
-      touchStartY.current = e.touches[0].clientY;
-    }
-  };
-
-  const onTouchEnd = (e) => {
-    if (touchStartY.current !== null) {
-      const dy = e.changedTouches[0].clientY - touchStartY.current;
-      if (dy > 70) showGemOfDay();
-      touchStartY.current = null;
-    }
-  };
-
   // ── Captain's Mode: long-press hero title (800ms) ───────────────────────────
   const startLongPress = () => {
     heroLongPressTimer.current = setTimeout(() => setCaptainOpen(true), 800);
@@ -2148,7 +2183,7 @@ export default function App() {
 
   const renderTab = () => {
     switch (tab) {
-      case 'kids': return <KidsTab ridden={ridden} setRidden={setRidden} />;
+      case 'rides': return <KidsTab ridden={ridden} setRidden={setRidden} />;
       case 'tasks': return <ChecklistTab checks={checks} setChecks={setChecks} />;
       case 'days': return <DaysTab cruiseDay={cruiseDay} setCruiseDay={setCruiseDay} heatMode={heatMode} setHeatMode={setHeatMode} />;
       case 'dining': return <DiningTab rotation={rotation} setRotation={setRotation} />;
@@ -2179,12 +2214,19 @@ export default function App() {
               </div>
               <div className="hero-ship">✦ Disney Adventure · Singapore ✦</div>
             </div>
-            <button onClick={() => setSyncOpen(true)} style={{
-              background:'rgba(245,200,66,.12)',border:'1px solid rgba(245,200,66,.28)',
-              borderRadius:'8px',padding:'6px 10px',cursor:'pointer',
-              color:'var(--gold)',fontSize:'11px',fontWeight:800,
-              fontFamily:"'Nunito',sans-serif",flexShrink:0,marginTop:'2px',
-            }}>🔄 Sync</button>
+            <div style={{display:'flex',gap:'6px',flexShrink:0,marginTop:'2px'}}>
+              <button onClick={showGemOfDay} style={{
+                background:'rgba(245,200,66,.12)',border:'1px solid rgba(245,200,66,.28)',
+                borderRadius:'8px',padding:'6px 10px',cursor:'pointer',
+                color:'var(--gold)',fontSize:'14px',fontFamily:"'Nunito',sans-serif",
+              }} title="Tip of the day">✨</button>
+              <button onClick={() => setSyncOpen(true)} style={{
+                background:'rgba(245,200,66,.12)',border:'1px solid rgba(245,200,66,.28)',
+                borderRadius:'8px',padding:'6px 10px',cursor:'pointer',
+                color:'var(--gold)',fontSize:'11px',fontWeight:800,
+                fontFamily:"'Nunito',sans-serif",
+              }}>🔄 Sync</button>
+            </div>
           </div>
           <div className="hero-divider" />
           <div style={{fontSize:'11px',color:'rgba(255,255,255,.5)'}}>
@@ -2252,15 +2294,7 @@ export default function App() {
         )}
 
         {/* Scroll content */}
-        <div
-          className="scroll-wrap"
-          ref={scrollRef}
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-        >
-          <div style={{textAlign:'center',padding:'6px 0 0',fontSize:'10px',color:'rgba(255,255,255,.2)'}}>
-            ↓ Pull for today's gem
-          </div>
+        <div className="scroll-wrap" ref={scrollRef}>
           {renderTab()}
         </div>
 
