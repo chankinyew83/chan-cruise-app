@@ -338,13 +338,13 @@ const RESTAURANTS = {
     badge:'Princess Vibes',
     mustOrder:[
       {name:'Garden Seasonal Starter',tip:'Menu changes by voyage. Ask your server what is freshest — they will recommend it immediately.'},
-      {name:'Princess-themed Kids Main',tip:'Plated with princess details. Your 5yo will refuse anything else once she sees this.'},
+      {name:'Princess-themed Kids Main',tip:'Plated with princess details. Your 9yo will love this.'},
       {name:'Summer Herb Main',tip:'Typically a fish or chicken preparation. Consistently well-executed across sailings.'},
-      {name:'Pixie Dust Lemonade (kids)',tip:'Arrives with edible glitter. Peak Disney moment for a 5yo. Order it.'},
-      {name:'Garden Dessert Plate',tip:'Presentation is theatrical here. Do not skip it, especially for your 5yo.'},
+      {name:'Pixie Dust Lemonade (kids)',tip:'Arrives with edible glitter. Peak Disney moment for a 9yo. Order it.'},
+      {name:'Garden Dessert Plate',tip:'Presentation is theatrical here. Do not skip it, especially for your 9yo.'},
     ],
     insider:[
-      '🏰 Enchanted Summer is in Town Square — the Disney Princess area. Your 5yo is already in the right frame of mind walking here.',
+      '🏰 Enchanted Summer is in Town Square — the Disney Princess area. Your 9yo is already in the right frame of mind walking here.',
       '✨ Schedule this on the same night as BBB for a full princess evening for your youngest.',
       '🌿 The most serene of the 6 rotational restaurants. Best for Night 3 or 4 when the family\'s energy is more mellow.',
       '🌸 BBB (Bibbidi Bobbidi Boutique) is steps away. The two experiences pair perfectly for one magical evening.',
@@ -385,7 +385,7 @@ const RESTAURANTS = {
       '📍 Located on Deck 17 near Toy Story Place — convenient before or after the water slides.',
       '🍽️ Buffet at breakfast and lunch, table service at dinner. The dinner rotation is included in your fare.',
       '🎡 Best casual restaurant for days when you want flexibility without formality.',
-      '✅ Good for the 5yo\'s lunch on BBB day — quick, reliable, no fuss.',
+      '✅ Good for the 9yo\'s lunch on BBB day — quick, reliable, no fuss.',
     ],
     dress:'Casual — poolwear acceptable at lunch',
   },
@@ -455,7 +455,7 @@ const CHECKLIST_ITEMS = [
     {t:"Book Port Arrival Time (PAT)",s:"Earliest slot = longest day on ship. Go for 11am window."},
     {t:"Pre-register kids for Oceaneer Club",s:"Do this in app now — skip the queue on boarding day"},
     {t:"Set alarm for character meet booking window",s:"Midnight SG time on your booking window day. Characters go FAST."},
-    {t:"Book Bibbidi Bobbidi Boutique for your 5yo",s:"Princess makeover. Sells out weeks before sailing. Non-negotiable."},
+    {t:"Book Bibbidi Bobbidi Boutique for your 9yo",s:"Princess makeover. Sells out weeks before sailing. Non-negotiable."},
     {t:"Book Palo (optional adults-only dinner)",s:"If you want 1 night just the two of you — kids go to Oceaneer Club"},
   ]},
   {cat:"📦 2 Weeks Before",items:[
@@ -534,7 +534,7 @@ const GEMS = [
   {t:"Free WiFi: WhatsApp + iMessage Only",tx:"Ship WiFi covers <strong>WhatsApp, iMessage, and Navigator app for free</strong>. You only need to buy a package for web browsing, social media, or streaming. The free tier is enough to coordinate with your wife between activities."},
   {t:"Room Service Breakfast (Free)",tx:"Order via app the night before for morning delivery. <strong>Free — tip only</strong> (~USD 3-5). Kids wake up to food at the cabin door. One of the most practical low-cost wins on the ship."},
   {t:"Free Soft Serve in Toy Story Place",tx:"Soft serve machines in Toy Story Place are <strong>self-serve and free</strong>. Your kids will locate them within 15 minutes of boarding. It becomes a religion by Day 2. Note: NOT Mickey-bar shaped. There are no Mickey bars on this ship."},
-  {t:"Quick-Service Hidden Gems Beyond Pixar Market",tx:"Four spots passengers love but miss: <strong>Grandma Tala's</strong> (buttermilk fried chicken + fries — best casual food on ship), <strong>Cosmic Kebabs</strong> (lamb shawarma), <strong>Mowgli's</strong> (butter chicken and naan), <strong>Tiana's Bayou</strong> (beignets, cold brew for a fee, hidden forest seating inside the bar — bring the 5yo here). All included in fare except cold brew."},
+  {t:"Quick-Service Hidden Gems Beyond Pixar Market",tx:"Four spots passengers love but miss: <strong>Grandma Tala's</strong> (buttermilk fried chicken + fries — best casual food on ship), <strong>Cosmic Kebabs</strong> (lamb shawarma), <strong>Mowgli's</strong> (butter chicken and naan), <strong>Tiana's Bayou</strong> (beignets, cold brew for a fee, hidden forest seating inside the bar — bring the 9yo here). All included in fare except cold brew."},
 ];
 
 // ─────────────────────────────── COMPONENTS ────────────────────────────────
@@ -669,9 +669,9 @@ function RestCard({ rest, nightLabel }) {
 // ─────────────────────────────── TABS ────────────────────────────────
 
 const KIDS_DATA = [
-  {k:'k9', em:'🧒', age:'9yo', ht:'1.20m'},
+  {k:'k9', em:'👧', age:'9yo', ht:'1.20m'},
   {k:'k7', em:'👦', age:'7yo', ht:'1.10m'},
-  {k:'k5', em:'👧', age:'5yo', ht:'0.90m'},
+  {k:'k5', em:'👦', age:'5yo', ht:'0.90m'},
 ];
 const RIDES = [
   {id:'iron',  label:'🎢 Ironcycle Test Run',  min:120, minStr:'120cm', note:'Roller coaster · 820ft · 30ft above deck · Deck 19',
@@ -790,7 +790,7 @@ function KidsTab() {
           <li><div className="dot dbl" /><strong>Strategy:</strong> Book "Selfies at Sea: Disney Royals" (princesses) and "Disney Pals" (Mickey/Minnie/Donald/Pluto/Goofy) via app on boarding. ALSO ask cast members daily about unscheduled walk-up meets — these have been confirmed to happen.</li>
           <li><div className="dot dg" />Characters confirmed on board: Mickey, Minnie, Donald, Pluto, Goofy, Duffy + Friends, Moana, Captain Jack Sparrow, Snow White, Jasmine, Rapunzel, Elsa, Belle, and others.</li>
           <li><div className="dot dg" />Random character wanderings on deck DO happen. Real passengers spotted Donald, Minnie, Ariel, and Duffy friends walking the decks without queues. <strong>Keep the Navigator app open</strong> for live character location alerts.</li>
-          <li><div className="dot dr" />The 5yo's best formal character moment: schedule a "Disney Royals" Selfies at Sea session — princesses in a group setting. Then supplement with whatever walk-up meets appear.</li>
+          <li><div className="dot dr" />The 9yo's best formal character moment: schedule a "Disney Royals" Selfies at Sea session — princesses in a group setting. Then supplement with whatever walk-up meets appear.</li>
         </ul>
       </div>
 
@@ -883,7 +883,7 @@ function DaysTab() {
         <TB t="0930" tx="Last character meets. Kids are not exhausted yet — best photos of the trip." type="pk" />
         <TB t="1100" tx="Final pool session. Last AquaMouse run. Let the kids feel 'last time' without narrating it." />
         <TB t="1300" tx="Lunch. Let the kids order their single favourite thing they've eaten all cruise." />
-        <TB t="1330" tx="👑 Bibbidi Bobbidi Boutique — your 5yo's main event. ~90 min. She exits as a princess. Her Iron Cycle." type="pk" note="Book in advance" nc="tp" />
+        <TB t="1330" tx="👑 Bibbidi Bobbidi Boutique — your 9yo's main event. ~90 min. She exits as a princess." type="pk" note="Book in advance" nc="tp" />
         <TB t="1530" tx="Pack non-essentials. Label all luggage. Bags must be outside cabin door by 2200 tonight." type="cr" note="Bags out by 2200" nc="tr" />
         <TB t="1700" tx="Final dip. Final soft-serve. Final AquaMouse if queue allows." />
         <TB t="1800" tx="🎬 Gala / Farewell Dinner at 1923. Semi-formal. The fancy night. Kids look unreal in proper clothes." type="te" note="Dress code" nc="tg" />
@@ -936,7 +936,7 @@ function DiningTab({ rotation, setRotation }) {
       </div>
 
       <div className="hl" style={{marginBottom:'12px',fontSize:'11.5px'}}>
-        💡 Tip: Schedule <strong>Hollywood Spotlight Club</strong> on Night 1 or 2 when energy is high. Schedule <strong>Enchanted Summer</strong> on the same night as BBB for your 5yo's princess evening.
+        💡 Tip: Schedule <strong>Hollywood Spotlight Club</strong> on Night 1 or 2 when energy is high. Schedule <strong>Enchanted Summer</strong> on the same night as BBB for your 9yo's princess evening.
       </div>
 
       {rotation.some(r=>r) ? (
