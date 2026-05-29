@@ -1,4 +1,27 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+
+// ─── Persistent storage — uses Claude artifact storage if available, localStorage otherwise ──
+const store = {
+  get: async (key, fallback = null) => {
+    try {
+      if (window.storage) {
+        const r = await window.storage.get(key);
+        return r ? JSON.parse(r.value) : fallback;
+      }
+      const v = localStorage.getItem('cruise_' + key);
+      return v ? JSON.parse(v) : fallback;
+    } catch { return fallback; }
+  },
+  set: async (key, value) => {
+    try {
+      if (window.storage) {
+        await window.storage.set(key, JSON.stringify(value));
+      } else {
+        localStorage.setItem('cruise_' + key, JSON.stringify(value));
+      }
+    } catch {}
+  },
+};
 
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Cinzel+Decorative:wght@700&family=Nunito:wght@400;600;700;800&display=swap');
@@ -38,9 +61,9 @@ body,#root{background:var(--navy);font-family:'Nunito',sans-serif;min-height:100
 .hero-glow{position:absolute;width:250px;height:250px;top:-80px;right:-80px;
   background:radial-gradient(circle,rgba(245,200,66,.18) 0%,transparent 60%);pointer-events:none;}
 .hero-castle{position:absolute;bottom:-2px;right:12px;font-size:42px;opacity:.12;line-height:1;}
-.hero-title{font-family:'Pacifico',cursive;font-size:24px;color:var(--gold);
+.hero-title{font-family:'Pacifico','Georgia',cursive;font-size:24px;color:var(--gold);
   text-shadow:0 2px 24px rgba(245,200,66,.45);line-height:1.1;}
-.hero-ship{font-family:'Cinzel Decorative',serif;font-size:10px;color:rgba(255,255,255,.65);
+.hero-ship{font-family:'Cinzel Decorative','Times New Roman',serif;font-size:10px;color:rgba(255,255,255,.65);
   letter-spacing:2.5px;text-transform:uppercase;margin-top:3px;}
 .hero-divider{width:56px;height:2px;background:linear-gradient(90deg,var(--gold),transparent);margin:7px 0;}
 .hero-pills{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px;}
@@ -50,20 +73,12 @@ body,#root{background:var(--navy);font-family:'Nunito',sans-serif;min-height:100
 .pb{background:rgba(26,85,191,.3);color:#88bfff;border:1px solid rgba(26,85,191,.4);}
 .pp{background:rgba(124,58,237,.25);color:#c4b5fd;border:1px solid rgba(124,58,237,.35);}
 
-/* Pull to refresh */
-.ptr{text-align:center;padding:10px;color:var(--gold);font-size:12px;font-weight:700;
-  overflow:hidden;transition:max-height .3s,opacity .3s;position:relative;z-index:2;}
-.ptr-spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(245,200,66,.3);
-  border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;
-  margin-right:7px;vertical-align:middle;}
-@keyframes spin{to{transform:rotate(360deg)}}
-
 /* Scroll */
 .scroll-wrap{overflow-y:auto;padding-bottom:76px;position:relative;z-index:1;}
 .content{padding:13px 13px 10px;}
 
 /* Section header */
-.shdr{font-family:'Cinzel Decorative',serif;font-size:10.5px;font-weight:700;
+.shdr{font-family:'Cinzel Decorative','Times New Roman',serif;font-size:10.5px;font-weight:700;
   color:var(--gold);letter-spacing:2px;text-transform:uppercase;
   margin:14px 0 8px;display:flex;align-items:center;gap:7px;}
 .shdr::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(245,200,66,.3),transparent);}
@@ -93,11 +108,12 @@ body,#root{background:var(--navy);font-family:'Nunito',sans-serif;min-height:100
 
 /* Lists */
 .lst{list-style:none;}
-.lst li{color:var(--text);font-size:12.5px;padding:5px 0;
+.lst li{color:var(--text);font-size:12.5px;padding:6px 0;
   border-bottom:1px solid rgba(255,255,255,.05);
-  display:flex;align-items:flex-start;gap:8px;line-height:1.45;}
+  line-height:1.5;}
 .lst li:last-child{border-bottom:none;}
-.dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.dot{display:inline-block;width:5px;height:5px;border-radius:50%;
+  vertical-align:middle;margin-right:6px;flex-shrink:0;}
 .dg{background:var(--gold);}
 .dr{background:#ff8091;}
 .dbl{background:#88bfff;}
@@ -112,7 +128,7 @@ body,#root{background:var(--navy);font-family:'Nunito',sans-serif;min-height:100
 .hl.gr{background:rgba(45,138,74,.07);border-color:var(--green);}
 
 /* Checklist */
-.ci{display:flex;align-items:flex-start;gap:9px;padding:8px 0;
+.ci{display:flex;align-items:flex-start;gap:9px;padding:11px 0;
   border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;}
 .ci:last-child{border-bottom:none;}
 .cb{width:17px;height:17px;border-radius:4px;border:2px solid rgba(245,200,66,.45);
@@ -133,7 +149,7 @@ body,#root{background:var(--navy);font-family:'Nunito',sans-serif;min-height:100
 /* Timeline */
 .day-hdr{display:flex;align-items:center;gap:9px;cursor:pointer;padding:9px 0 5px;user-select:none;}
 .dnum{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-family:'Cinzel Decorative',serif;font-size:10px;font-weight:700;color:#001220;flex-shrink:0;}
+  font-family:'Cinzel Decorative','Times New Roman',serif;font-size:10px;font-weight:700;color:#001220;flex-shrink:0;}
 .dn1{background:linear-gradient(135deg,var(--gold),#c8962e);}
 .dn2{background:linear-gradient(135deg,#4A90D9,#1455bf);}
 .dn3{background:linear-gradient(135deg,#ff8091,var(--red));}
@@ -150,7 +166,7 @@ body,#root{background:var(--navy);font-family:'Nunito',sans-serif;min-height:100
 .tb.cr::before{background:rgba(196,30,58,.5);border-color:rgba(196,30,58,.8);}
 .tb.te::before{background:rgba(0,212,170,.5);border-color:rgba(0,212,170,.7);}
 .tb.pk::before{background:rgba(255,107,157,.5);border-color:rgba(255,107,157,.7);}
-.tbt{font-family:'Cinzel Decorative',serif;font-size:9px;color:var(--gold);letter-spacing:.3px;}
+.tbt{font-family:'Cinzel Decorative','Times New Roman',serif;font-size:9px;color:var(--gold);letter-spacing:.3px;}
 .tb.cr .tbt{color:#ff8091;}
 .tb.te .tbt{color:#00d4aa;}
 .tb.pk .tbt{color:#ff6b9d;}
@@ -204,7 +220,7 @@ body,#root{background:var(--navy);font-family:'Nunito',sans-serif;min-height:100
   position:relative;overflow:hidden;}
 .iron-hero::after{content:'🦾';position:absolute;right:-5px;bottom:-12px;
   font-size:72px;opacity:.07;line-height:1;}
-.iron-title{font-family:'Cinzel Decorative',serif;font-size:15px;font-weight:700;
+.iron-title{font-family:'Cinzel Decorative','Times New Roman',serif;font-size:15px;font-weight:700;
   color:#ff4d6d;text-shadow:0 0 20px rgba(255,77,109,.5);}
 .iron-sub{color:rgba(255,255,255,.58);font-size:11px;margin-top:3px;}
 .kid-tracker{display:flex;gap:7px;margin:11px 0;}
@@ -220,7 +236,7 @@ body,#root{background:var(--navy);font-family:'Nunito',sans-serif;min-height:100
 /* Pack */
 .pack-cat{font-size:11px;font-weight:800;color:var(--gold);letter-spacing:1px;
   text-transform:uppercase;margin:12px 0 5px;display:flex;align-items:center;gap:6px;}
-.pi{display:flex;align-items:flex-start;gap:8px;padding:6px 0;
+.pi{display:flex;align-items:flex-start;gap:8px;padding:9px 0;
   border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;}
 .pi:last-child{border-bottom:none;}
 .pcb{width:15px;height:15px;border-radius:3px;border:1.5px solid rgba(245,200,66,.4);
@@ -259,7 +275,7 @@ body,#root{background:var(--navy);font-family:'Nunito',sans-serif;min-height:100
   display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom,0px);}
 .tab-btn{flex:1;background:none;border:none;color:var(--dim);
   font-family:'Nunito',sans-serif;font-size:8px;font-weight:700;
-  padding:7px 2px 8px;cursor:pointer;display:flex;flex-direction:column;
+  padding:9px 4px 10px;cursor:pointer;display:flex;flex-direction:column;
   align-items:center;gap:2px;transition:color .2s;letter-spacing:.2px;position:relative;}
 .tab-btn.act{color:var(--gold);}
 .tab-btn.act::after{content:'';position:absolute;bottom:0;left:18%;right:18%;
@@ -338,14 +354,15 @@ const RESTAURANTS = {
     badge:'Princess Vibes',
     mustOrder:[
       {name:'Garden Seasonal Starter',tip:'Menu changes by voyage. Ask your server what is freshest — they will recommend it immediately.'},
-      {name:'Princess-themed Kids Main',tip:'Plated with princess details. Your 9yo will love this.'},
+      {name:'Princess-themed Kids Main',tip:'Plated with princess details. Your birthday girl will love this.'},
       {name:'Summer Herb Main',tip:'Typically a fish or chicken preparation. Consistently well-executed across sailings.'},
-      {name:'Pixie Dust Lemonade (kids)',tip:'Arrives with edible glitter. Peak Disney moment for a 9yo. Order it.'},
-      {name:'Garden Dessert Plate',tip:'Presentation is theatrical here. Do not skip it, especially for your 9yo.'},
+      {name:'Pixie Dust Lemonade (kids)',tip:'Arrives with edible glitter. Peak Disney moment for your birthday girl. Order it.'},
+      {name:'Garden Dessert Plate',tip:'Presentation is theatrical here. Do not skip it — especially for your birthday girl.'},
     ],
     insider:[
-      '🏰 Enchanted Summer is in Town Square — the Disney Princess area. Your 9yo is already in the right frame of mind walking here.',
-      '✨ Schedule this on the same night as BBB for a full princess evening for your youngest.',      '🌿 The most serene of the 6 rotational restaurants. Best for Night 3 or 4 when the family\'s energy is more mellow.',
+      '🏰 Enchanted Summer is in Town Square — the Disney Princess area. Your birthday girl is already in the right frame of mind walking here.',
+      '✨ Schedule this on the same night as BBB for a full princess evening for your youngest.',
+      '🌿 The most serene of the 6 rotational restaurants. Best for Night 3 or 4 when the family\'s energy is more mellow.',
       '🌸 BBB (Bibbidi Bobbidi Boutique) is steps away. The two experiences pair perfectly for one magical evening.',
     ],
     dress:'Smart casual',
@@ -384,7 +401,7 @@ const RESTAURANTS = {
       '📍 Located on Deck 17 near Toy Story Place — convenient before or after the water slides.',
       '🍽️ Buffet at breakfast and lunch, table service at dinner. The dinner rotation is included in your fare.',
       '🎡 Best casual restaurant for days when you want flexibility without formality.',
-      '✅ Good for the 9yo\'s lunch on BBB day — quick, reliable, no fuss.',
+      '✅ Good for a quick lunch for the boys while your birthday girl is at BBB — reliable, no fuss.',
     ],
     dress:'Casual — poolwear acceptable at lunch',
   },
@@ -396,55 +413,55 @@ const SHOWS = [
     when:"Multiple evenings. Check Navigator app for times.",
     seat:"⚠️ FRONT rows are best — snow and bubble confetti effects are felt most in the first rows. NOT rows 5-12 as other guides say. Go centre-front. Arrive 20-25 min early. Kids on aisle seats.",
     book:"Book via Navigator app on boarding day. No photography or recording permitted inside.",
-    km:"🌟🌟🌟🌟🌟",dnm:true},
+    km:"🌟🌟🌟🌟🌟",dnm:true,conf:"verified",src:"Multiple passenger reports Mar–Apr 2026"},
   {name:"Remember (WALL-E's Remember)",type:"Walt Disney Theatre · Deck 7 Forward",em:"✨",dur:"~45 min",
     desc:"WALL-E travels through Coco, Up, Inside Out, The Little Mermaid, Aladdin, and Frozen to fix EVE. Confirmed as 'the best 45 minutes onboard' by multiple real passengers. Created exclusively for Disney Adventure.",
     when:"Multiple evenings. Rotates with Seas the Adventure. Check Navigator app.",
     seat:"Same rules — FRONT rows for best effects. Arrive 20-25 min early. Second showing is less crowded.",
     book:"Book via Navigator app. No photography or recording permitted.",
-    km:"🌟🌟🌟🌟🌟",dnm:true},
+    km:"🌟🌟🌟🌟🌟",dnm:true,conf:"verified",src:"Multiple passenger reports Mar–Apr 2026"},
   {name:"The Lion King: Celebration in the Sky",type:"Fireworks at Sea",em:"🎆",dur:"~15 min",
     desc:"The ONLY fireworks show at sea on any cruise ship worldwide. Confirmed for Disney Adventure. This is a standalone dedicated fireworks event — not tied to any themed night. Absolutely unmissable.",
     when:"Night 3 (typical). Check Navigator app — exact timing varies.",
     seat:"Deck 18/19 RIGHT SIDE near the waterslide staircase — confirmed by May 2026 passengers. NOT stern-facing as earlier guides said. Get there 30-45 min early. Spots go FAST.",
-    book:"No booking. Show up early and claim your stern-facing position.",
-    km:"🌟🌟🌟🌟🌟",dnm:true},
+    book:"No booking. Show up early and claim your position.",
+    km:"🌟🌟🌟🌟🌟",dnm:true,conf:"verified",src:"Confirmed for Disney Adventure, May 2026 passengers"},
   {name:"Let's Set Sail",type:"Disney Imagination Garden · Embarkation Show",em:"🎊",dur:"~30 min",
     desc:"Embarkation day show at the Garden Stage. Real passengers confirm: Mickey, Minnie, Belle, Elsa, and Ms. Marvel. The ship honks to 'When You Wish Upon a Star' as it leaves. Multiple passengers report this as an unexpectedly emotional moment.",
     when:"Day 1, ~1630 at sail-away. E-Muster MUST be complete first.",
     seat:"Garden Stage area, Disney Imagination Garden (Deck 10). Port side for Marina Bay Sands view. Arrive 20 min early.",
     book:"No booking. Be at the Garden Stage at 1600 to claim space.",
-    km:"🌟🌟🌟🌟🌟",dnm:true},
+    km:"🌟🌟🌟🌟🌟",dnm:true,conf:"verified",src:"Passenger confirmations Mar 2026"},
   {name:"Avengers Assemble!",type:"Deck Show · Marvel Landing",em:"⚡",dur:"~30 min",
     desc:"Confirmed Marvel deck event. Live characters, effects, superhero action. Your 7 and 9yo will be completely locked in.",
     when:"Check Navigator app. Typically daytime or early evening sea days.",
     seat:"Marvel Landing area, Deck 19. Arrive 20 min early. Centre stage position.",
     book:"No booking. Navigator app for time.",
-    km:"🌟🌟🌟🌟🌟",dnm:true},
+    km:"🌟🌟🌟🌟🌟",dnm:true,conf:"reported",src:"Confirmed Marvel deck event, passenger reports Mar 2026"},
   {name:"Moana: Call of the Sea",type:"Wayfinder Bay · Outdoor",em:"🌺",dur:"~30 min",
-    desc:"Live outdoor performance at Wayfinder Bay. Confirmed by real passengers. Great for your 5yo and 7yo. Best shows are morning or evening — midday heat at Wayfinder Bay is brutal based on real passenger reports.",
+    desc:"Live outdoor performance at Wayfinder Bay. Confirmed by real passengers. Great for your 5yo and 7yo. The ship turns direction before the show starts — front row won't face the sun. Morning or evening still best to avoid heat.",
     when:"Check Navigator app. Avoid midday showings — Singapore heat makes open decks difficult.",
-    seat:"Wayfinder Bay (Decks 10-11). Shaded areas fill fast. Arrive 15-20 min early.",
+    seat:"Wayfinder Bay (Decks 10-11). Shaded areas fill fast. Arrive 15-20 min early. Front row is fine — ship turns before show starts.",
     book:"No booking.",
-    km:"🌟🌟🌟🌟",dnm:false},
+    km:"🌟🌟🌟🌟",dnm:false,conf:"reported",src:"Passenger reports Mar–Apr 2026"},
   {name:"Captain Jack Sparrow & The Siren Queen",type:"Garden Stage · Disney Imagination Garden",em:"🏴‍☠️",dur:"~30 min",
-    desc:"Swashbuckling pirate adventure at the Garden Stage — guests help Captain Jack hunt for treasure. Interactive. Your 7 and 9yo are the exact target age for this.",
+    desc:"Swashbuckling pirate adventure at the Garden Stage — guests help Captain Jack hunt for treasure. Interactive. Your 7 and 9yo are the exact target age for this. This is a regular deck show — not a Pirate Night event.",
     when:"Check Navigator app. Multiple times daily.",
     seat:"Garden Stage, Deck 10. Arrive 15 min early. Kids to the front.",
     book:"No booking.",
-    km:"🌟🌟🌟🌟",dnm:false},
+    km:"🌟🌟🌟🌟",dnm:false,conf:"reported",src:"Confirmed show, passenger reports Mar 2026"},
   {name:"Duffy and The Friend Ship",type:"Garden Stage · Disney Imagination Garden",em:"🐻",dur:"~25 min",
     desc:"First-ever Duffy show on a Disney cruise ship. Original songs, character meet-and-greets. Confirmed. Your 5yo will be captivated. Duffy and Friends are popular in Asia — this is a big deal for the region.",
     when:"Check Navigator app.",
     seat:"Garden Stage, Deck 10. Kids to the front. Arrive 10 min early.",
     book:"No booking.",
-    km:"🌟🌟🌟🌟",dnm:false},
+    km:"🌟🌟🌟🌟",dnm:false,conf:"verified",src:"First-ever Duffy show on DCL, confirmed official"},
   {name:"Baymax: Big Hero 6 Fitness Expo",type:"Deck Event · Marvel Landing area",em:"🤖",dur:"~20 min",
     desc:"Baymax leads a fitness-themed interactive deck event. Confirmed by multiple passengers on B2B sailings. Hands-on and interactive — good for kids who want to move rather than sit and watch.",
     when:"Check Navigator app. Typically mornings on sea days.",
     seat:"No booking. Arrive 10 min early.",
     book:"No booking required.",
-    km:"🌟🌟🌟",dnm:false},
+    km:"🌟🌟🌟",dnm:false,conf:"reported",src:"Tiffany Q. Liu B2B Mar–Apr 2026"},
 ];
 
 const CHECKLIST_ITEMS = [
@@ -460,7 +477,7 @@ const CHECKLIST_ITEMS = [
   {cat:"📦 2 Weeks Before",items:[
     {t:"Buy door magnet supplies",s:"Print designs, laminate, attach adhesive magnets. No tape allowed on doors."},
     {t:"Join Disney Adventure Singapore Facebook group",s:"Sign up for Fish Extender gift exchange. Buy small gifts ($3–5/cabin)."},
-    {t:"No Pirate Night — skip costumes",s:"Confirmed by PlanDisney (official Disney). Captain Jack show is a regular deck show. No themed night, no costume dinner."},
+    {t:"No Pirate Night — skip dedicated costumes",s:"Confirmed by PlanDisney (official Disney). Captain Jack show is a regular deck show, not a ship-wide Pirate Night."},
     {t:"Get formal outfits for Hollywood Spotlight Club / gala night",s:"1 dinner is semi-formal. Kids too. Hollywood Spotlight Club is the dressed-up restaurant."},
     {t:"Purchase seasickness patches (Kwells/Scopoderm)",s:"Put on the MORNING you board — not on the ship."},
     {t:"Buy a power strip (non-surge protector type)",s:"Surge protectors are confiscated. Plain power strip only."},
@@ -493,7 +510,7 @@ const PACKING = [
   {cat:"👗 Clothes (Real Traveller Intel)",items:[
     {t:"Swimwear × 2 sets per person",tip:"Things get wet. You WILL be doing laundry otherwise. Pack two."},
     {t:"Formal outfit for Hollywood Spotlight Club night",tip:"One semi-formal night. This is it. Don't overpack formal wear."},
-    {t:"Full pirate outfits for all 5",tip:"⚠️ NO Pirate Night on Disney Adventure (PlanDisney confirmed). Captain Jack show is a regular show. No ship-wide costume event."},
+    {t:"Full pirate outfits for all 5",tip:"⚠️ NO Pirate Night on Disney Adventure (PlanDisney confirmed). Captain Jack show is a regular show, no ship-wide costume event. Pack if you want, but it's not required."},
     {t:"Flip flops + water shoes for kids",tip:"The pool deck gets HOT. Water shoes prevent burns. Travellers mention this constantly."},
     {t:"Light rain poncho for each person",tip:"Deck parties happen rain or shine. 10pm fireworks in a downpour = still magical but you'll want a poncho."},
     {t:"Extra socks × lots",tip:"Kids go through socks in 6 hours on a ship. Pack more than you think."},
@@ -520,23 +537,134 @@ const PACKING = [
 ];
 
 const GEMS = [
-  {t:"HEAT KILLS YOUR DAY PLAN",tx:"Singapore humidity is brutal. Real passengers report the open top deck becomes a ghost town by 1000. One show (Jack-Jack's Diaper Dash) had to <strong>relocate mid-event</strong> because the mat was too hot for infants. Rule: all outdoor activities before 1000 or after 1700. Non-negotiable."},
-  {t:"Ironcycle — Walk Up, No App Booking",tx:"<strong>No app reservations — just queue up.</strong> Opens ~0930–1000. May 2026 passengers waited ~1 hour at peak. Best strategy: arrive at Deck 19 by 0930 for first run, or try during first dinner seating (~1800) when crowds drop. <strong>Closed-toe secured shoes required — barefoot or slippers get you turned away.</strong> Downtime peaks midday (heat). Always check Navigator app status before walking there."},
-  {t:"Selfies at Sea — But Walk-Up Meets Exist",tx:"The scheduled 'Selfies at Sea' sessions are distanced photos only. BUT <strong>traditional walk-up character meets with contact have been confirmed happening</strong> — Snow White and Mickey were spotted in Town Square with no reservation needed. Ask cast members every morning. Characters also wander decks unannounced."},
-  {t:"NO Mickey Ice Cream Bars on This Ship",tx:"<strong>Disney Adventure does not have Mickey-shaped ice cream bars</strong>. This surprised every single reviewer. Confirmed missing by multiple passengers. Do not tell the kids to expect it. Soft serve in Toy Story Place is your substitute."},
-  {t:"Pixie Dusting = Real Theft Risk",tx:"On Disney Adventure, the door gift exchange is called 'Pixie Dusting.' Multiple maiden voyage passengers had items stolen from corridor pouches. <strong>Disney is not liable</strong> — it's unofficial. Use a small lockable pouch and don't leave anything valuable. CCTV helped some guests recover items."},
-  {t:"NO Pirate Night on Disney Adventure",tx:"<strong>Disney Adventure has no Pirate Night</strong> — confirmed by PlanDisney (official Disney panel, March 2026) and EatSleepDisney: 'Pirate Night is NOT offered on Singapore sailings.' Captain Jack Sparrow & The Siren Queen is a real confirmed deck show but it is not a ship-wide themed night. No costume dinner, no special menu. Do not pack dedicated pirate costumes."},
-  {t:"Front Rows Are Best for Theatre Shows",tx:"Ignore guides saying rows 5-12. <strong>Real passengers confirm: FRONT rows are best</strong> for 'Seas the Adventure' and 'Remember' — that's where snow and confetti effects land. No photography or recording in the Walt Disney Theatre. Arrive 20-25 min early."},
-  {t:"No Deck 14 — You're on 13, Then 15",tx:"Disney Adventure skips Deck 14 entirely (unlucky number in Asia). Ship goes: 12, 13, 15, 16... <strong>Your Deck 13 cabin sits directly below Deck 15.</strong> Important for navigation. Don't search for Deck 14."},
-  {t:"In-Room Bacha Coffee — Use It",tx:"Your cabin has complimentary <strong>Bacha Coffee and TWG Tea</strong> with a Bacha kettle. Multiple passengers said it was so good they couldn't return to home coffee. Use it every morning before heading out. Saves queuing at Cove Café."},
-  {t:"Ship Is 342m Long — Buffer 15 Minutes",tx:"<strong>Allow 10-15 min walking time between any two areas.</strong> Real passengers got lost repeatedly — lower ceilings create disorientation. Navigation anchor: Disney Imagination Garden (Deck 10) is the heart of the ship. Use it to reorient whenever confused."},
-  {t:"Free WiFi: WhatsApp + iMessage Only",tx:"Ship WiFi covers <strong>WhatsApp, iMessage, and Navigator app for free</strong>. You only need to buy a package for web browsing, social media, or streaming. The free tier is enough to coordinate with your wife between activities."},
-  {t:"Room Service — There's a Delivery Fee",tx:"Room service has a <strong>per-order delivery fee</strong> on top of the tip — it is not free. Convenient for cabin breakfast but budget for it. Check the current fee with guest services on boarding day."},
-  {t:"Free Soft Serve in Toy Story Place",tx:"Soft serve machines in Toy Story Place are <strong>self-serve and free</strong>. Your kids will locate them within 15 minutes of boarding. It becomes a religion by Day 2. Note: NOT Mickey-bar shaped. There are no Mickey bars on this ship."},
-  {t:"Quick-Service Hidden Gems Beyond Pixar Market",tx:"Four spots passengers love but miss: <strong>Grandma Tala's</strong> (buttermilk fried chicken + fries — best casual food on ship), <strong>Cosmic Kebabs</strong> (lamb shawarma), <strong>Mowgli's</strong> (butter chicken and naan), <strong>Tiana's Bayou</strong> (beignets, cold brew for a fee, hidden forest seating inside the bar — bring the 9yo here). All included in fare except cold brew."},
+  {id:"gem_001",category:"environment",t:"HEAT KILLS YOUR DAY PLAN",
+    tx:"Singapore humidity is brutal. Real passengers report the open top deck becomes a ghost town by 1000. One show (Jack-Jack's Diaper Dash) had to <strong>relocate mid-event</strong> because the mat was too hot for infants. Rule: all outdoor activities before 1000 or after 1700. Non-negotiable.",
+    conf:"reported",src:"Multiple passengers, inaugural sailings Mar 2026",
+    verified_date:"2026-03-20",stale_after_days:90,tags:["heat","outdoor","timing","planning"]},
+  {id:"gem_002",category:"rides",t:"Ironcycle — Walk Up, No App Booking",
+    tx:"<strong>No app reservations — just queue up.</strong> Opens ~0930–1000. May 2026 passengers waited ~1 hour at peak. Best strategy: arrive at Deck 19 by 0930 for first run, or try during first dinner seating (~1800) when crowds drop. <strong>Closed-toe secured shoes required — barefoot or slippers get you turned away.</strong> Downtime peaks midday (heat). Always check Navigator app status before walking there.",
+    conf:"verified",src:"Facebook group May 2026",
+    verified_date:"2026-05-24",stale_after_days:60,tags:["ironcycle","marvel","rides","shoes"]},
+  {id:"gem_003",category:"characters",t:"Selfies at Sea — But Walk-Up Meets Exist",
+    tx:"The scheduled 'Selfies at Sea' sessions are distanced photos only. BUT <strong>traditional walk-up character meets with contact have been confirmed happening</strong> — Snow White and Mickey were spotted in Town Square with no reservation needed. Ask cast members every morning. Characters also wander decks unannounced.",
+    conf:"reported",src:"Passengers Mar–Apr 2026",
+    verified_date:"2026-04-10",stale_after_days:60,tags:["characters","meets","selfies","walk-up"]},
+  {id:"gem_004",category:"dining",t:"NO Mickey Ice Cream Bars on This Ship",
+    tx:"<strong>Disney Adventure does not have Mickey-shaped ice cream bars</strong>. This surprised every single reviewer. Confirmed missing by multiple passengers. Do not tell the kids to expect it. Soft serve in Toy Story Place is your substitute.",
+    conf:"verified",src:"Confirmed across multiple sailings Mar–Apr 2026",
+    verified_date:"2026-04-01",stale_after_days:180,tags:["food","ice-cream","expectations","kids"]},
+  {id:"gem_005",category:"logistics",t:"Pixie Dusting = Real Theft Risk",
+    tx:"On Disney Adventure, the door gift exchange is called 'Pixie Dusting.' Multiple maiden voyage passengers had items stolen from corridor pouches. <strong>Disney is not liable</strong> — it's unofficial. Use a small lockable pouch and don't leave anything valuable. CCTV helped some guests recover items.",
+    conf:"reported",src:"Multiple maiden voyage passengers Mar 2026",
+    verified_date:"2026-03-20",stale_after_days:90,tags:["pixie-dusting","theft","fish-extender","security"]},
+  {id:"gem_005b",category:"logistics",t:"NO Pirate Night on Disney Adventure",
+    tx:"<strong>Disney Adventure has no Pirate Night</strong> — confirmed by PlanDisney (official Disney panel, March 2026). Captain Jack Sparrow & The Siren Queen is a real confirmed deck show but it is not a ship-wide themed night. No costume dinner, no special menu.",
+    conf:"verified",src:"PlanDisney official Q&A Mar 2026",
+    verified_date:"2026-03-03",stale_after_days:365,tags:["pirate","expectations","packing","planning"]},
+  {id:"gem_006",category:"shows",t:"Front Rows Are Best for Theatre Shows",
+    tx:"Ignore guides saying rows 5-12. <strong>Real passengers confirm: FRONT rows are best</strong> for 'Seas the Adventure' and 'Remember' — that's where snow and confetti effects land. No photography or recording in the Walt Disney Theatre. Arrive 20-25 min early.",
+    conf:"verified",src:"Multiple passenger confirmations Mar–Apr 2026",
+    verified_date:"2026-04-10",stale_after_days:180,tags:["theatre","seating","effects","shows"]},
+  {id:"gem_007",category:"navigation",t:"No Deck 14 — You're on 13, Then 15",
+    tx:"Disney Adventure skips Deck 14 entirely (unlucky number in Asia). Ship goes: 12, 13, 15, 16... <strong>Your Deck 13 cabin sits directly below Deck 15.</strong> Important for navigation. Don't search for Deck 14.",
+    conf:"verified",src:"Ship structural fact",
+    verified_date:"2026-03-15",stale_after_days:365,tags:["deck","navigation","ship-layout"]},
+  {id:"gem_008",category:"facilities",t:"In-Room Bacha Coffee — Use It",
+    tx:"Your cabin has complimentary <strong>Bacha Coffee and TWG Tea</strong> with a Bacha kettle. Multiple passengers said it was so good they couldn't return to home coffee. Use it every morning before heading out. Saves queuing at any café on the ship.",
+    conf:"verified",src:"DCL official amenity, confirmed by passengers",
+    verified_date:"2026-03-15",stale_after_days:365,tags:["coffee","cabin","bacha","twg","amenities"]},
+  {id:"gem_009",category:"navigation",t:"Ship Is 342m Long — Buffer 15 Minutes",
+    tx:"<strong>Allow 10-15 min walking time between any two areas.</strong> Real passengers got lost repeatedly — lower ceilings create disorientation. Navigation anchor: Disney Imagination Garden (Deck 10) is the heart of the ship. Use it to reorient whenever confused.",
+    conf:"reported",src:"Passenger navigation reports Mar 2026",
+    verified_date:"2026-03-20",stale_after_days:365,tags:["navigation","walking","timing","deck-10"]},
+  {id:"gem_010",category:"logistics",t:"Free WiFi: WhatsApp + iMessage Only",
+    tx:"Ship WiFi covers <strong>WhatsApp, iMessage, and Navigator app for free</strong>. You only need to buy a package for web browsing, social media, or streaming. The free tier is enough to coordinate with your wife between activities.",
+    conf:"verified",src:"DCL official policy",
+    verified_date:"2026-03-15",stale_after_days:180,tags:["wifi","internet","communication","free"]},
+  {id:"gem_011",category:"dining",t:"Room Service — Delivery Fee Applies",
+    tx:"Room service has a <strong>per-order delivery fee</strong> on top of the tip — it is not free. Convenient for cabin breakfast but budget for it. Check the current fee with guest services on boarding day.",
+    conf:"verified",src:"DCL policy update 2026",
+    verified_date:"2026-05-01",stale_after_days:180,tags:["room-service","breakfast","fee","kids"]},
+  {id:"gem_012",category:"dining",t:"Free Soft Serve in Toy Story Place",
+    tx:"Soft serve machines in Toy Story Place are <strong>self-serve and free</strong>. Your kids will locate them within 15 minutes of boarding. It becomes a religion by Day 2. Note: NOT Mickey-bar shaped. There are no Mickey bars on this ship.",
+    conf:"reported",src:"Multiple passengers Mar–Apr 2026",
+    verified_date:"2026-04-01",stale_after_days:120,tags:["soft-serve","free","toy-story-place","kids"]},
+  {id:"gem_013",category:"dining",t:"Quick-Service Hidden Gems Beyond Pixar Market",
+    tx:"Four spots passengers love but miss: <strong>Grandma Tala's</strong> (buttermilk fried chicken + fries — best casual food on ship), <strong>Cosmic Kebabs</strong> (lamb shawarma), <strong>Mowgli's</strong> (butter chicken and naan), <strong>Tiana's Bayou</strong> (beignets, cold brew for a fee — bring the kids here). All included in fare except cold brew.",
+    conf:"reported",src:"Tiffany Q. Liu B2B Mar–Apr 2026",
+    verified_date:"2026-04-02",stale_after_days:120,tags:["food","quick-service","dining","hidden"]},
 ];
 
-// ─────────────────────────────── COMPONENTS ────────────────────────────────
+// Lightweight schedule for NOW bar
+const SCHEDULE = {
+  1:[
+    {t:"0600",ev:"Apply seasickness patch"},
+    {t:"0800",ev:"Light meal at home"},
+    {t:"0915",ev:"Book GrabXL"},
+    {t:"0930",ev:"Depart Macpherson"},
+    {t:"1015",ev:"Arrive MBCC — drop bags"},
+    {t:"1245",ev:"🛳️ BOARD"},
+    {t:"1300",ev:"⚡ APP SPRINT — open Navigator now"},
+    {t:"1400",ev:"Set up door magnets + leave first Pixie Dusting gifts 🎁"},
+    {t:"1430",ev:"Pool + water slides"},
+    {t:"1530",ev:"E-Muster via app"},
+    {t:"1630",ev:"🎉 Sail Away Party"},
+    {t:"1800",ev:"Rotational Dinner Night 1"},
+    {t:"2130",ev:"Kids to bed"},
+  ],
+  2:[
+    {t:"0600",ev:"Early deck walk · Check fish extender for Pixie Dusting gifts 🎁"},
+    {t:"0730",ev:"Family breakfast"},
+    {t:"0830",ev:"🎢 Marvel Landing — Ironcycle + rides"},
+    {t:"0930",ev:"Oceaneer Club drop"},
+    {t:"1100",ev:"Toy Story Place water slides"},
+    {t:"1300",ev:"Lunch — Pixar Market"},
+    {t:"1430",ev:"Character meets / Selfies at Sea"},
+    {t:"1630",ev:"Rest time"},
+    {t:"1800",ev:"Rotational Dinner Night 2"},
+    {t:"1930",ev:"🎭 Theatre show — FRONT rows"},
+    {t:"2130",ev:"Kids to bed"},
+  ],
+  3:[
+    {t:"0600",ev:"Wake"},
+    {t:"0700",ev:"Breakfast"},
+    {t:"0800",ev:"Water slides — beat the heat"},
+    {t:"0900",ev:"Marvel Landing follow-up"},
+    {t:"0930",ev:"Oceaneer Club drop"},
+    {t:"1100",ev:"Pick up kids — pool time"},
+    {t:"1300",ev:"Lunch"},
+    {t:"1430",ev:"Character meets"},
+    {t:"1600",ev:"⚠️ REST — mandatory before fireworks night"},
+    {t:"1700",ev:"Head to Deck 18/19 right side for fireworks spot"},
+    {t:"1800",ev:"Rotational Dinner Night 3"},
+    {t:"1845",ev:"Head to fireworks position — spots go FAST"},
+    {t:"1930",ev:"⚔️ Captain Jack & The Siren Queen — Garden Stage"},
+    {t:"2030",ev:"🎆 Lion King Fireworks at Sea"},
+    {t:"2130",ev:"Kids to bed"},
+  ],
+  4:[
+    {t:"0600",ev:"Final early deck walk"},
+    {t:"0700",ev:"Slow breakfast"},
+    {t:"0800",ev:"🛍️ SHOP NOW — merch sells out"},
+    {t:"0930",ev:"Last character meets"},
+    {t:"1100",ev:"Final pool session"},
+    {t:"1300",ev:"Kids pick their favourite meal"},
+    {t:"1330",ev:"👑 Bibbidi Bobbidi Boutique"},
+    {t:"1530",ev:"Pack non-essentials"},
+    {t:"1700",ev:"Final dip + soft serve"},
+    {t:"1800",ev:"🎬 Gala Farewell Dinner"},
+    {t:"1930",ev:"Farewell show at theatre"},
+    {t:"2100",ev:"Last deck walk — stars + ocean"},
+    {t:"2130",ev:"Kids to bed · Settle gratuities"},
+    {t:"2200",ev:"⚠️ BAGS OUT — hard deadline"},
+  ],
+  5:[
+    {t:"0600",ev:"Wake · Breakfast at Pixar Market"},
+    {t:"0730",ev:"Disembarkation lounge"},
+    {t:"0830",ev:"Disembark · Collect bags · Customs"},
+    {t:"0900",ev:"🏠 GrabXL home to Macpherson"},
+  ],
+};
 
 function CheckItem({ item, checked, onToggle }) {
   return (
@@ -566,13 +694,22 @@ function PackItem({ item, packed, onToggle }) {
   );
 }
 
-function DayCard({ n, cls, title, sub, children }) {
-  const [open, setOpen] = useState(n === 1);
+function DayCard({ n, cls, title, sub, children, defaultOpen = false, isPast = false }) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="card" style={{padding:'11px 12px',marginBottom:'8px'}}>
+    <div className="card" style={{padding:'11px 12px',marginBottom:'8px',
+      opacity: isPast ? 0.65 : 1, transition:'opacity .2s'}}>
       <div className="day-hdr" onClick={() => setOpen(!open)}>
-        <div className={`dnum ${cls}`}>{n}</div>
-        <div className="day-info"><h3>{title}</h3><p>{sub}</p></div>
+        <div className={`dnum ${cls}`} style={{position:'relative'}}>
+          {n}
+          {isPast && <span style={{position:'absolute',top:-3,right:-3,fontSize:'8px',
+            background:'#6ddb80',borderRadius:'50%',width:10,height:10,
+            display:'flex',alignItems:'center',justifyContent:'center',color:'#001220'}}>✓</span>}
+        </div>
+        <div className="day-info">
+          <h3>{title}</h3>
+          <p>{isPast ? '✓ Completed · ' : ''}{sub}</p>
+        </div>
         <div className={`chev ${open ? 'open' : ''}`}>▼</div>
       </div>
       {open && <div className="timeline">{children}</div>}
@@ -590,17 +727,42 @@ function TB({ t, tx, note, nc, type='' }) {
   );
 }
 
-function ShowCard({ show }) {
+function ShowCard({ show, seen, onToggleSeen }) {
   const [open, setOpen] = useState(false);
+  const CONF = {
+    verified:  {icon:'🟢', color:'#6ddb80', bg:'rgba(45,138,74,.15)', border:'rgba(45,138,74,.3)'},
+    reported:  {icon:'🟡', color:'#ffb347', bg:'rgba(180,100,0,.15)', border:'rgba(180,100,0,.3)'},
+    unverified:{icon:'🔴', color:'#ff8091', bg:'rgba(196,30,58,.15)', border:'rgba(196,30,58,.3)'},
+  };
+  const c = CONF[show.conf] || CONF.unverified;
   return (
-    <div className="show-card">
+    <div className="show-card" style={{opacity: seen ? 0.5 : 1, transition:'opacity .2s'}}>
       <div className="show-hdr" onClick={() => setOpen(!open)}>
         <div className="show-em">{show.em}</div>
         <div className="show-meta" style={{flex:1}}>
-          <h3>{show.name}</h3>
+          <h3 style={{textDecoration: seen ? 'line-through' : 'none'}}>{show.name}</h3>
           <p>{show.type} · {show.dur}</p>
-          {show.dnm && <span className="dnm-badge">⭐ DON'T MISS</span>}
+          <div style={{display:'flex',gap:'5px',flexWrap:'wrap',marginTop:'3px'}}>
+            {show.dnm && !seen && <span className="dnm-badge">⭐ DON'T MISS</span>}
+            {seen && <span style={{fontSize:'9px',fontWeight:700,padding:'2px 7px',borderRadius:'10px',
+              color:'#6ddb80',background:'rgba(45,138,74,.15)',border:'1px solid rgba(45,138,74,.3)'}}>✓ SEEN</span>}
+            <span style={{
+              fontSize:'9px',fontWeight:700,padding:'2px 7px',borderRadius:'10px',
+              letterSpacing:'.5px',color:c.color,background:c.bg,border:`1px solid ${c.border}`,
+            }}>{c.icon} {show.conf || 'unverified'}</span>
+          </div>
         </div>
+        <button
+          onClick={e => { e.stopPropagation(); onToggleSeen(); }}
+          style={{
+            width:36,height:36,borderRadius:'50%',border:'none',cursor:'pointer',flexShrink:0,
+            background: seen ? 'rgba(45,138,74,.25)' : 'rgba(255,255,255,.07)',
+            color: seen ? '#6ddb80' : 'rgba(255,255,255,.3)',
+            fontSize:'15px',display:'flex',alignItems:'center',justifyContent:'center',
+            transition:'all .2s',marginRight:'4px',
+          }}
+          title={seen ? 'Mark as not seen' : 'Mark as seen'}
+        >{seen ? '✓' : '○'}</button>
         <div className={`chev ${open ? 'open' : ''}`} style={{marginTop:'4px'}}>▼</div>
       </div>
       {open && (
@@ -616,6 +778,11 @@ function ShowCard({ show }) {
             📱 {show.book}
           </div>
           <div className="km">Kids Meter: {show.km}</div>
+          {show.src && (
+            <div style={{fontSize:'10px',color:'rgba(255,255,255,.25)',marginTop:'5px'}}>
+              Source: {show.src}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -683,27 +850,22 @@ const RIDES = [
 const HEIGHT_MAP = {k9:120, k7:110, k5:90};
 const AGE_MAP    = {k9:9,   k7:7,   k5:5};
 
-function KidsTab() {
-  const init = {};
-  KIDS_DATA.forEach(k => { init[k.k]={}; RIDES.forEach(r => { init[k.k][r.id]=false; }); });
-  const [ridden, setRidden] = useState(init);
+function KidsTab({ ridden, setRidden }) {
   const toggleRide = (k, rid) => setRidden(p => ({...p,[k]:{...p[k],[rid]:!p[k][rid]}}));
   const possible = KIDS_DATA.reduce((s,k)=>s+RIDES.filter(r=>r.eligible(HEIGHT_MAP[k.k])).length,0);
   const done = KIDS_DATA.reduce((s,k)=>s+RIDES.filter(r=>ridden[k.k][r.id]).length,0);
+  const [open, setOpen] = useState(null);
+  const toggle = (id) => setOpen(o => o === id ? null : id);
 
   return (
     <div className="content">
       <div className="iron-hero">
-        <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'6px'}}>
-          <span style={{fontSize:'24px'}}>⚡</span>
+        <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'8px'}}>
+          <span style={{fontSize:'22px'}}>⚡</span>
           <div>
-            <div className="iron-title">MARVEL LANDING MISSION</div>
-            <div className="iron-sub">3 confirmed rides · Deck 19 · All heights verified from official Disney source</div>
+            <div className="iron-title">MARVEL LANDING</div>
+            <div className="iron-sub">Deck 19 · Walk-up only — no app booking · Tap to mark done</div>
           </div>
-        </div>
-
-        <div className="hl r" style={{margin:'8px 0 8px',fontSize:'11px'}}>
-          🎢 <strong>Ironcycle Test Run min: 120cm confirmed.</strong> Only 9yo (1.20m) qualifies. BUT your 7yo and 5yo both qualify for Pym Quantum Racers (89cm) and Groot Galaxy Spin (81cm). Tap rides to mark as done.
         </div>
 
         {RIDES.map(ride => (
@@ -714,7 +876,6 @@ function KidsTab() {
               <span style={{background:'rgba(245,200,66,.12)',color:'var(--gold)',padding:'1px 7px',
                 borderRadius:'10px',fontSize:'9px',fontWeight:700}}>Min {ride.minStr}</span>
             </div>
-            <div style={{fontSize:'9.5px',color:'rgba(255,255,255,.38)',marginBottom:'5px'}}>{ride.note}</div>
             <div style={{display:'flex',gap:'7px'}}>
               {KIDS_DATA.map(kid => {
                 const ok = ride.eligible(HEIGHT_MAP[kid.k]);
@@ -724,7 +885,7 @@ function KidsTab() {
                   <div key={kid.k} onClick={()=>ok && toggleRide(kid.k,ride.id)}
                     style={{flex:1,background:isDone?'rgba(45,138,74,.25)':ok?'rgba(255,255,255,.05)':'rgba(196,30,58,.1)',
                       border:`1px solid ${isDone?'rgba(45,138,74,.5)':ok?'rgba(255,255,255,.1)':'rgba(196,30,58,.25)'}`,
-                      borderRadius:'8px',padding:'7px 4px',textAlign:'center',
+                      borderRadius:'8px',padding:'12px 4px',textAlign:'center',
                       cursor:ok?'pointer':'default',opacity:ok?1:0.55}}>
                     <div style={{fontSize:'16px'}}>{kid.em}</div>
                     <div style={{fontSize:'8.5px',fontWeight:800,color:'rgba(255,255,255,.5)',marginTop:'2px'}}>{kid.ht}</div>
@@ -741,57 +902,67 @@ function KidsTab() {
         ))}
 
         <div style={{fontSize:'11px',color:'rgba(255,255,255,.4)',textAlign:'center',marginTop:'6px'}}>
-          {done}/{possible} eligible rides completed
+          {done}/{possible} eligible rides done
         </div>
         <div className="prog"><div className="prog-fill" style={{width:`${possible>0?done/possible*100:0}%`}} /></div>
 
         <ul className="lst" style={{marginTop:'10px'}}>
-          <li><div className="dot dr" /><strong>Ironcycle: 9yo only (120cm exact minimum, confirmed).</strong> 2 per car, inline. Closed-toe secured shoes required.</li>
-          <li><div className="dot dg" /><strong>Pym Quantum Racers + Groot Galaxy Spin: all 3 kids ride.</strong> 5yo (90cm) needs a parent in the car — take turns.</li>
-          <li><div className="dot dbl" /><strong>Ironcycle is walk-up only — no app booking needed.</strong> Queue at Deck 19 by 0930 when it opens ~1000. Closed-toe secured shoes required. Check Navigator app status before walking there.</li>
-          <li><div className="dot dg" />Best time: <strong>0830 on any sea day.</strong> Shortest queue of the entire cruise.</li>
-          <li><div className="dot dr" />Ironcycle was not running on the maiden voyage (March 2026) but confirmed operational shortly after. Check Navigator app status on boarding day.</li>
+          <li><strong>Ironcycle is walk-up only — no app booking.</strong> Queue at Deck 19 by 0930 when it opens ~1000. Closed-toe secured shoes required or you get turned away.</li>
+          <li><strong>Best queue time: 0830–0930</strong> on any sea day, or during first dinner seating (~1800).</li>
+          <li>Ironcycle had downtime on early sailings — check Navigator app status before walking to Deck 19.</li>
         </ul>
       </div>
 
-      {/* Oceaneer Club */}
-      <div className="shdr">🏰 Oceaneer Club (Ages 3–10)</div>
-      <div className="card gc">
-        <div className="card-title">Your 3 Kids' Second Home <span className="badge bgr">Pre-Register in App</span></div>
-        <ul className="lst">
-          <li><div className="dot dgr" />Disney, Pixar, Marvel and Star Wars themed zones. Supervised. Included in your fare.</li>
-          <li><div className="dot dgr" /><strong>Pre-register in Navigator app before boarding</strong> — walk in on Day 1 without queuing.</li>
-          <li><div className="dot dg" /><strong>Kids never want to leave.</strong> Use Oceaneer Club for 1.5–2 hrs of adult time on sea days. Spa, pool, quiet deck.</li>
-          <li><div className="dot dbl" />Check-in and out anytime. Snacks provided. No distress calls.</li>
-        </ul>
-      </div>
-
-      {/* Toy Story Place Water */}
-      <div className="shdr">💦 Toy Story Place — Water Area</div>
-      <div className="card pc">
-        <div className="card-title">🌊 Water Slides + Splash Pads <span className="badge bpu">No AquaMouse here</span></div>
-        <ul className="lst">
-          <li><div className="dot dr" />Disney Adventure does <strong>not</strong> have AquaMouse (that is on Disney Wish/Treasure). The water attraction is Toy Story Place on the upper decks.</li>
-          <li><div className="dot dg" />Toy Story Place has: <strong>large family pool, multiple whirlpools, towering water slides, and interactive splash pads.</strong></li>
-          <li><div className="dot dg" />All 3 kids will thrive here. The splash pads are perfect for the 5yo; the water slides for the 7 and 9yo.</li>
-          <li><div className="dot dbl" />Go at <strong>0800–0900 on sea days</strong> for minimal queues. Gets crowded by 1100.</li>
-          <li><div className="dot dg" /><strong>Pizza Planet</strong> is steps away in Toy Story Place — easiest lunch on any sea day.</li>
-        </ul>
-      </div>
-
-      {/* Character Meets */}
-      <div className="shdr">⭐ Character Meets — Read This First</div>
-      <div className="card rc">
-        <div className="card-title">⚠️ Selfies at Sea — Hybrid System <span className="badge br">Real Passenger Alert</span></div>
-        <ul className="lst">
-          <li><div className="dot dr" /><strong>Disney Adventure does NOT have traditional character hugs by default.</strong> The system launched as "Selfies at Sea" — distanced photos only, no physical contact. This drew massive backlash.</li>
-          <li><div className="dot dg" />Disney partially rolled back in mid-March 2026. As of latest sailings: <strong>hybrid system</strong> — some sessions are still distanced "Selfies at Sea" via app, others have reverted to walk-up traditional meets with contact.</li>
-          <li><div className="dot dbl" /><strong>Strategy:</strong> Book "Selfies at Sea: Disney Royals" (princesses) and "Disney Pals" (Mickey/Minnie/Donald/Pluto/Goofy) via app on boarding. ALSO ask cast members daily about unscheduled walk-up meets — these have been confirmed to happen.</li>
-          <li><div className="dot dg" />Characters confirmed on board: Mickey, Minnie, Donald, Pluto, Goofy, Duffy + Friends, Moana, Captain Jack Sparrow, Snow White, Jasmine, Rapunzel, Elsa, Belle, and others.</li>
-          <li><div className="dot dg" />Random character wanderings on deck DO happen. Real passengers spotted Donald, Minnie, Ariel, and Duffy friends walking the decks without queues. <strong>Keep the Navigator app open</strong> for live character location alerts.</li>
-          <li><div className="dot dr" />The 9yo's best formal character moment: schedule a "Disney Royals" Selfies at Sea session — princesses in a group setting. Then supplement with whatever walk-up meets appear.</li>
-        </ul>
-      </div>
+      {[
+        { id:'oceaneer', icon:'🏰', label:'Oceaneer Club', badge:'Ages 3–10 · Included',
+          content: <ul className="lst">
+            <li>Disney, Pixar, Marvel and Star Wars themed zones. Supervised. Included in fare.</li>
+            <li><strong>Pre-register in Navigator app before boarding</strong> — walk in Day 1 without queuing.</li>
+            <li><strong>Kids never want to leave.</strong> Use it for 1.5–2 hrs of adult time on sea days.</li>
+            <li>Check-in and out anytime. Snacks provided.</li>
+          </ul>
+        },
+        { id:'water', icon:'💦', label:'Water Slides', badge:'Toy Story Place · Decks 17–19',
+          content: <ul className="lst">
+            <li>Large family pool, water slides, whirlpools, and splash pads. <strong>Not AquaMouse</strong> — that's on Disney Wish.</li>
+            <li>Splash pads ideal for the 5yo. Water slides for the 7 and 9yo.</li>
+            <li>Go at <strong>0800–0900</strong> on sea days for minimal queues.</li>
+            <li>Pixar Market is steps away on Deck 17 — easiest lunch on sea days.</li>
+          </ul>
+        },
+        { id:'characters', icon:'⭐', label:'Character Meets', badge:'Read before boarding',
+          content: <ul className="lst">
+            <li><strong>Selfies at Sea is the default</strong> — distanced photos, no hugs. Disney partially rolled this back after backlash.</li>
+            <li>As of April 2026: <strong>hybrid system</strong> — some sessions distanced, others reverted to walk-up with contact. Ask cast members each morning.</li>
+            <li>Book "Disney Royals" (princesses) and "Disney Pals" (Mickey/Minnie/Goofy) via Navigator app on boarding day.</li>
+            <li>Characters wander decks unannounced. Keep Navigator app open for live alerts.</li>
+            <li>Your birthday girl's best formal moment: "Disney Royals" session. Boys go to "Disney Pals" at the same time.</li>
+          </ul>
+        },
+      ].map(s => (
+        <div key={s.id} style={{marginBottom:'8px'}}>
+          <div onClick={() => toggle(s.id)} style={{
+            display:'flex',alignItems:'center',gap:'10px',
+            background:'linear-gradient(135deg,rgba(11,61,145,.2) 0%,rgba(0,15,45,.45) 100%)',
+            border:'1px solid rgba(245,200,66,.2)',borderRadius:'12px',
+            padding:'12px 13px',cursor:'pointer',
+          }}>
+            <span style={{fontSize:'20px'}}>{s.icon}</span>
+            <div style={{flex:1}}>
+              <div style={{color:'#fff',fontSize:'13px',fontWeight:800}}>{s.label}</div>
+              <div style={{color:'rgba(255,255,255,.35)',fontSize:'10.5px',marginTop:'1px'}}>{s.badge}</div>
+            </div>
+            <span style={{color:'rgba(255,255,255,.3)',fontSize:'11px',transition:'transform .2s',
+              display:'inline-block',transform:open===s.id?'rotate(180deg)':'none'}}>▼</span>
+          </div>
+          {open === s.id && (
+            <div style={{background:'rgba(0,8,25,.5)',border:'1px solid rgba(245,200,66,.15)',
+              borderTop:'none',borderRadius:'0 0 12px 12px',padding:'10px 13px 12px'}}>
+              {s.content}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }
@@ -820,13 +991,143 @@ function ChecklistTab({ checks, setChecks }) {
   );
 }
 
-function DaysTab() {
+function NowBar({ cruiseDay, setCruiseDay, heatMode, setHeatMode }) {
+  const getNow = () => { const d = new Date(); return d.getHours() * 100 + d.getMinutes(); };
+  const [now, setNow] = useState(getNow);
+  const [heatPromptDismissed, setHeatPromptDismissed] = useState(false);
+  useEffect(() => {
+    const id = setInterval(() => setNow(getNow()), 60000);
+    return () => clearInterval(id);
+  }, []);
+
+  const events = SCHEDULE[cruiseDay] || [];
+  const nowInt = now;
+  const upcoming = events.filter(e => parseInt(e.t) > nowInt);
+  const next = upcoming[0] || null;
+  const after = upcoming[1] || null;
+  const current = [...events].reverse().find(e => parseInt(e.t) <= nowInt);
+  const showHeatPrompt = !heatMode && nowInt >= 1000 && nowInt < 1700 && !heatPromptDismissed;
+
+  const fmt = t => `${t.slice(0,-2)}:${t.slice(-2)}`;
+  const minUntil = t => {
+    const tInt = parseInt(t);
+    const tMins = Math.floor(tInt/100)*60 + (tInt%100);
+    const nMins = Math.floor(nowInt/100)*60 + (nowInt%100);
+    const diff = tMins - nMins;
+    return diff < 60 ? `${diff}m` : `${Math.floor(diff/60)}h ${diff%60}m`;
+  };
+  const nowStr = `${String(Math.floor(nowInt/100)).padStart(2,'0')}:${String(nowInt%100).padStart(2,'0')}`;
+
+  return (
+    <div style={{
+      background: heatMode
+        ? 'linear-gradient(135deg,rgba(60,20,0,.5) 0%,rgba(40,10,0,.7) 100%)'
+        : 'linear-gradient(135deg,rgba(0,30,40,.6) 0%,rgba(0,15,30,.8) 100%)',
+      border: `1px solid ${heatMode ? 'rgba(255,100,0,.4)' : 'rgba(0,212,170,.35)'}`,
+      borderRadius:'12px',padding:'11px 13px',marginBottom:'12px',transition:'all .3s',
+    }}>
+      <div style={{display:'flex',alignItems:'center',gap:'6px',marginBottom:'9px'}}>
+        <span style={{
+          fontSize:'8px',fontWeight:800,letterSpacing:'1.5px',
+          color:'#00d4aa',background:'rgba(0,212,170,.12)',
+          border:'1px solid rgba(0,212,170,.3)',borderRadius:'4px',
+          padding:'2px 6px',flexShrink:0,
+        }}>● LIVE</span>
+        {[1,2,3,4,5].map(d => (
+          <button key={d} onClick={() => setCruiseDay(d)} style={{
+            width:'32px',height:'32px',borderRadius:'50%',border:'none',cursor:'pointer',
+            fontFamily:"'Cinzel Decorative','Times New Roman',serif",fontSize:'10px',fontWeight:700,
+            background: d===cruiseDay ? 'var(--gold)' : 'rgba(255,255,255,.08)',
+            color: d===cruiseDay ? '#001220' : 'rgba(255,255,255,.35)',
+            transition:'all .15s', flexShrink:0,
+          }}>{d}</button>
+        ))}
+        <span style={{marginLeft:'auto',fontSize:'11px',fontWeight:800,color:'rgba(255,255,255,.5)',letterSpacing:'.5px',flexShrink:0}}>
+          🕐 {nowStr}
+        </span>
+        <button onClick={() => setHeatMode(h => !h)} style={{
+          background: heatMode ? 'rgba(255,80,0,.25)' : 'rgba(255,255,255,.07)',
+          border: `1px solid ${heatMode ? 'rgba(255,80,0,.5)' : 'rgba(255,255,255,.15)'}`,
+          borderRadius:'8px',padding:'4px 8px',cursor:'pointer',flexShrink:0,
+          fontSize:'11px',color: heatMode ? '#ff8040' : 'rgba(255,255,255,.4)',
+          fontFamily:"'Nunito',sans-serif",fontWeight:700,transition:'all .2s',
+        }}>🌡️{heatMode ? ' ON' : ''}</button>
+      </div>
+
+      {heatMode && (
+        <div style={{background:'rgba(255,60,0,.12)',border:'1px solid rgba(255,60,0,.25)',
+          borderRadius:'8px',padding:'7px 10px',marginBottom:'9px',
+          fontSize:'11.5px',color:'#ff8040',lineHeight:1.4}}>
+          🌡️ <strong>Heat mode on</strong> — outdoor activities not recommended until 17:00. Stick to indoor/shaded venues.
+        </div>
+      )}
+
+      {showHeatPrompt && (
+        <div style={{background:'rgba(255,80,0,.08)',border:'1px solid rgba(255,80,0,.2)',
+          borderRadius:'8px',padding:'8px 10px',marginBottom:'9px',
+          display:'flex',alignItems:'center',gap:'8px'}}>
+          <span style={{fontSize:'11px',color:'rgba(255,200,100,.8)',flex:1,lineHeight:1.4}}>
+            ☀️ It's after 10:00 — open decks get brutal. Enable heat mode?
+          </span>
+          <div style={{display:'flex',gap:'5px',flexShrink:0}}>
+            <button onClick={() => { setHeatMode(true); setHeatPromptDismissed(true); }} style={{
+              background:'rgba(255,80,0,.2)',border:'1px solid rgba(255,80,0,.4)',
+              borderRadius:'6px',padding:'4px 8px',cursor:'pointer',
+              color:'#ff8040',fontSize:'10px',fontWeight:800,fontFamily:"'Nunito',sans-serif",
+            }}>Yes</button>
+            <button onClick={() => setHeatPromptDismissed(true)} style={{
+              background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.1)',
+              borderRadius:'6px',padding:'4px 8px',cursor:'pointer',
+              color:'rgba(255,255,255,.3)',fontSize:'10px',fontWeight:800,fontFamily:"'Nunito',sans-serif",
+            }}>No</button>
+          </div>
+        </div>
+      )}
+
+      {current && (
+        <div style={{fontSize:'10.5px',color:'rgba(255,255,255,.35)',marginBottom:'4px'}}>
+          ↑ {fmt(current.t)} — {current.ev}
+        </div>
+      )}
+      {next ? (
+        <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
+          <span style={{fontSize:'9px',fontWeight:800,background:'rgba(245,200,66,.18)',color:'var(--gold)',
+            padding:'2px 7px',borderRadius:'8px',letterSpacing:'.5px',flexShrink:0}}>NEXT</span>
+          <span style={{color:'#fff',fontSize:'12.5px',fontWeight:700,flex:1}}>{fmt(next.t)} — {next.ev}</span>
+          <span style={{fontSize:'10px',color:'rgba(245,200,66,.6)',flexShrink:0}}>in {minUntil(next.t)}</span>
+        </div>
+      ) : (
+        <div style={{fontSize:'12px',color:'rgba(255,255,255,.4)'}}>✓ All events complete for Day {cruiseDay}</div>
+      )}
+      {after && (
+        <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+          <span style={{fontSize:'9px',fontWeight:800,background:'rgba(255,255,255,.06)',color:'rgba(255,255,255,.3)',
+            padding:'2px 7px',borderRadius:'8px',letterSpacing:'.5px',flexShrink:0}}>AFTER</span>
+          <span style={{color:'rgba(255,255,255,.5)',fontSize:'12px',flex:1}}>{fmt(after.t)} — {after.ev}</span>
+          <span style={{fontSize:'10px',color:'rgba(255,255,255,.25)',flexShrink:0}}>in {minUntil(after.t)}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DaysTab({ cruiseDay, setCruiseDay, heatMode, setHeatMode }) {
   return (
     <div className="content">
+      <NowBar cruiseDay={cruiseDay} setCruiseDay={setCruiseDay} heatMode={heatMode} setHeatMode={setHeatMode} />
+      <div style={{
+        display:'flex', alignItems:'center', gap:'8px', margin:'4px 0 10px',
+      }}>
+        <div style={{height:'1px', flex:1, background:'rgba(255,255,255,.08)'}} />
+        <span style={{fontSize:'9px', fontWeight:800, color:'rgba(255,255,255,.25)',
+          letterSpacing:'2px', textTransform:'uppercase'}}>Full Plan</span>
+        <div style={{height:'1px', flex:1, background:'rgba(255,255,255,.08)'}} />
+      </div>
       <div className="hl r" style={{marginBottom:'10px'}}>
         🌊 4 nights · ALL sea days · No ports. Light meal at home before boarding — do not rely on the ship for your first meal.
       </div>
-      <DayCard n={1} cls="dn1" title="🛳️ Embarkation" sub="Board 1245 · First 15 min = gold">
+      <DayCard n={1} cls="dn1" title="🛳️ Embarkation" sub="Board 1245 · First 15 min = gold"
+        defaultOpen={cruiseDay===1} isPast={cruiseDay>1}>
         <TB t="0600" tx="Wake. Patch behind ear NOW — Scopoderm or Kwells. Takes 2hrs to kick in. Non-negotiable." type="cr" note="Do not skip" nc="tr" />
         <TB t="0800" tx="Light meal at home (brunch). Boarding buffet is chaos — arrive fed, not hungry." note="Pre-board feed" nc="tg" />
         <TB t="0915" tx="Book GrabXL now (7-seater). Family of 5 + 4-night luggage will not fit a regular GrabCar." type="cr" note="GrabXL only" nc="tr" />
@@ -835,7 +1136,7 @@ function DaysTab() {
         <TB t="1045" tx="Terminal check-in, security, boarding lounge. Keep carry-on with meds, swimwear, charger, passports." />
         <TB t="1245" tx="BOARD. Take the ship photo at the gangway. They use it all cruise." type="cr" note="Board!" nc="tr" />
         <TB t="1300" tx="🔥 APP SPRINT — open Navigator immediately. Book: character meets, shows, Pym Quantum Racers, Groot Galaxy Spin. Ironcycle is walk-up. 15 minutes. Go." type="cr" note="Highest-value 15 min of trip" nc="tr" />
-        <TB t="1330" tx="Light bite at Cabanas. Quick. Free." />
+        <TB t="1330" tx="Light bite at Pixar Market (Deck 17). Quick. Free." />
         <TB t="1400" tx="Cabin opens. 20 mins: set up door magnets + Fish Extender bag with the kids. Make it a mission." type="te" note="Door setup" nc="tt" />
         <TB t="1430" tx="Swimwear on. Pool and water slides before the afternoon surge." type="pk" />
         <TB t="1530" tx="E-Muster via app — complete before 1630 or you miss the Sail Away party. Takes 10 min." type="cr" note="Mandatory" nc="tr" />
@@ -846,58 +1147,62 @@ function DaysTab() {
         <TB t="2130" tx="Kids to bed. Deck 13 blackout curtains = nuclear dark. They sleep well." />
       </DayCard>
 
-      <DayCard n={2} cls="dn2" title="🌊 Sea Day 1" sub="Iron Cycle · Characters · Shows">
-        <TB t="0600" tx="Wake early. Deck walk 0600–0700 = golden light, zero people, pure ship magic. Coffee from Cove Café." type="te" note="Secret window" nc="tt" />
+      <DayCard n={2} cls="dn2" title="🌊 Sea Day 1" sub="Iron Cycle · Characters · Shows"
+        defaultOpen={cruiseDay===2} isPast={cruiseDay>2}>
+        <TB t="0600" tx="Wake early. Deck walk 0600–0700 = golden light, zero people, pure ship magic. Use the in-cabin Bacha kettle first — saves queuing." type="te" note="Secret window" nc="tt" />
         <TB t="0730" tx="Family breakfast — main dining room for the sit-down experience." />
-        <TB t="0830" tx="🎢 MARVEL LANDING — go now. Ironcycle (9yo only), Pym Quantum Racers and Groot Galaxy Spin (all 3 kids). 0830 is the lowest-queue window of the entire cruise." type="cr" note="Lowest queue window" nc="tr" />
+        <TB t="0830" tx="🎢 MARVEL LANDING — go now. Queue for Ironcycle (9yo only, walk-up), Pym Quantum Racers and Groot Galaxy Spin (all 3 kids). 0830 is the lowest-queue window of the entire cruise." type="cr" note="Lowest queue window" nc="tr" />
         <TB t="0930" tx="Drop kids at Oceaneer Club (pre-registered = walk straight in). Adults: spa, upper deck. Allow 10-15 min to walk between areas — ship is massive." type="pk" />
         <TB t="1000" tx="⚠️ HEAT WARNING: By 1000 the open decks get brutal in Singapore humidity. Real passengers report upper deck becomes a ghost town by midday. Plan all outdoor activities before 1000 or after 1700." type="cr" note="Real passenger warning" nc="tr" />
-        <TB t="1100" tx="Collect kids. Woody and Jessie's Wild Slides (Toy Story Place, Decks 17-19). Go before the 1130 crowd peak." />
+        <TB t="1100" tx="Collect kids. Water slides at Toy Story Place (Decks 17-19). Go before the 1130 crowd peak." />
         <TB t="1300" tx="Lunch. Pixar Market (Deck 17, near slides) is fastest and most convenient." />
         <TB t="1430" tx="⭐ Selfies at Sea session (book via Navigator) OR check for walk-up meets. Ask cast members about unscheduled character appearances." type="cr" note="Check app for walk-ups" nc="tr" />
         <TB t="1630" tx="Rest. Cabin quiet time. 30 min is the minimum. Don't skip this." />
         <TB t="1800" tx="Rotational Dinner Night 2." type="te" />
         <TB t="1930" tx="🌊 Seas the Adventure OR ✨ Remember (WALL-E) at Walt Disney Theatre, Deck 7 Forward. FRONT rows for best effects (snow + confetti). No photo/recording." type="pk" note="Front rows for effects" nc="tp" />
-        <TB t="2130" tx="Kids to bed. Order room service breakfast via app for tomorrow (delivery fee applies — tip on top)." />
+        <TB t="2130" tx="Kids to bed. Room service available — delivery fee applies." />
       </DayCard>
 
-      <DayCard n={3} cls="dn3" title="🎆 Sea Day 2" sub="Captain Jack show · Rest HARD · Lion King fireworks at sea">
+      <DayCard n={3} cls="dn3" title="🎆 Sea Day 2" sub="Captain Jack · REST HARD · Lion King fireworks at sea"
+        defaultOpen={cruiseDay===3} isPast={cruiseDay>3}>
         <TB t="0600" tx="Wake. Second sea day — kids are in full cruise rhythm now." />
         <TB t="0700" tx="Breakfast. Let the kids pick." />
-        <TB t="0800" tx="Woody and Jessie's Wild Slides — before the heat hits. Earliest queue of the day." type="te" note="Beat the heat" nc="tt" />
+        <TB t="0800" tx="Water slides at Toy Story Place — before the heat hits. Earliest queue of the day." type="te" note="Beat the heat" nc="tt" />
         <TB t="0900" tx="Marvel Landing follow-up — any rides the kids need to retry. Check Ironcycle status in Navigator app." />
         <TB t="0930" tx="Oceaneer Club drop. This is your last quiet adult window before the cruise turns festive." type="pk" />
         <TB t="1100" tx="Pick up kids. Pool or shaded areas — avoid unshaded upper deck midday." />
         <TB t="1300" tx="Lunch." />
-        <TB t="1430" tx="Character meet session #2 — check Navigator app. Walk-up meets sometimes appear without notice, especially in Town Square. Keep checking." type="cr" note="Check app constantly" nc="tr" />
-        <TB t="1600" tx="REST. This is non-negotiable. 'The Lion King: Celebration in the Sky' fireworks evening runs late. If kids don't nap, the 5yo melts at 1930. Force it." type="cr" note="Critical rest" nc="tr" />
-        <TB t="1700" tx="Get to the stern deck early tonight — fireworks are unmissable. No Pirate Night on this ship." type="pk" note="Stern deck prep" nc="tp" />
-        <TB t="1800" tx="Rotational Dinner Night 3. Regular dinner — no Pirate Night on Disney Adventure. Check Navigator for your restaurant." type="te" />
-        <TB t="1845" tx="Head to stern deck IMMEDIATELY after dinner to claim your fireworks spot. Allow 10-15 min to walk from dining room. Real passengers say spots go FAST." type="cr" note="Go immediately" nc="tr" />
-        <TB t="1930" tx="⚔️ Captain Jack Sparrow & The Siren Queen at Garden Stage — guests hunt treasure with Jack. Real confirmed show. Not a Pirate Night event." type="cr" />
-        <TB t="2030" tx='🎆 "THE LION KING: CELEBRATION IN THE SKY" — the only fireworks show at sea on ANY cruise ship worldwide. Face the stern. From a moving ship. Over the ocean. Nothing else competes.' type="cr" note="Only fireworks at sea on Earth" nc="tr" />
-        <TB t="2130" tx="Kids crash immediately. You: quiet drink at Taverna Portorosso or Wayfinder Bay." />
+        <TB t="1430" tx="Character meet session #2 — check Navigator app. Walk-up meets sometimes appear without notice, especially in Town Square." type="cr" note="Check app constantly" nc="tr" />
+        <TB t="1600" tx="REST. This is non-negotiable. Fireworks night runs late. If kids don't nap, the 5yo melts at 1930. Force it." type="cr" note="Critical rest" nc="tr" />
+        <TB t="1700" tx="Head to Deck 18/19 RIGHT SIDE near the waterslide staircase — confirmed May 2026 fireworks position. Get there early — spots go FAST." type="pk" note="Fireworks position" nc="tp" />
+        <TB t="1800" tx="Rotational Dinner Night 3. Regular dinner — no Pirate Night on Disney Adventure." type="te" />
+        <TB t="1845" tx="Back to Deck 18/19 right side. Allow 10-15 min walk from dining room." type="cr" note="Go now" nc="tr" />
+        <TB t="1930" tx="⚔️ Captain Jack Sparrow & The Siren Queen at Garden Stage — real confirmed deck show, not a Pirate Night event." type="cr" />
+        <TB t="2030" tx='🎆 "THE LION KING: CELEBRATION IN THE SKY" — the only fireworks show at sea on ANY cruise ship worldwide. From a moving ship. Over the ocean. Nothing else competes.' type="cr" note="Only fireworks at sea on Earth" nc="tr" />
+        <TB t="2130" tx="Kids crash immediately. You: quiet drink at Wayfinder Bay." />
       </DayCard>
 
-      <DayCard n={4} cls="dn4" title="✨ Sea Day 3" sub="Shop early · BBB · Farewell magic">
+      <DayCard n={4} cls="dn4" title="✨ Sea Day 3" sub="Shop early · BBB · Farewell magic"
+        defaultOpen={cruiseDay===4} isPast={cruiseDay>4}>
         <TB t="0600" tx="Final early deck walk. Last morning at sea. This one hits differently — savour it." type="te" />
         <TB t="0700" tx="Breakfast. Slow morning. Let the kids feel it." />
         <TB t="0800" tx="🛍️ SHOP NOW. Ship-exclusive merch sells out on the last sea day. Mickey ears, Spirit Jerseys (kids' sizes go first), Dooney bags, pin sets. First pick." type="cr" note="Go early" nc="tr" />
         <TB t="0930" tx="Last character meets. Kids are not exhausted yet — best photos of the trip." type="pk" />
-        <TB t="1100" tx="Final pool session. Last water slide run. Let the kids feel 'last time' without narrating it." />
+        <TB t="1100" tx="Final pool session. Last water slides run. Let the kids feel 'last time' without narrating it." />
         <TB t="1300" tx="Lunch. Let the kids order their single favourite thing they've eaten all cruise." />
-        <TB t="1330" tx="👑 Bibbidi Bobbidi Boutique — your 9yo's main event. ~90 min. She exits as a princess." type="pk" note="Book in advance" nc="tp" />
+        <TB t="1330" tx="👑 Bibbidi Bobbidi Boutique — your birthday girl's main event. ~90 min. She exits as a princess. Send the boys to Oceaneer Club." type="pk" note="Book in advance" nc="tp" />
         <TB t="1530" tx="Pack non-essentials. Label all luggage. Bags must be outside cabin door by 2200 tonight." type="cr" note="Bags out by 2200" nc="tr" />
-        <TB t="1700" tx="Final dip. Final soft-serve. Final water slide if queue allows." />
-        <TB t="1800" tx="🎬 Gala / Farewell Dinner at 1923. Semi-formal. The fancy night. Kids look unreal in proper clothes." type="te" note="Dress code" nc="tg" />
+        <TB t="1700" tx="Final dip. Final soft-serve. Final water slides if queue allows." />
+        <TB t="1800" tx="🎬 Gala / Farewell Rotational Dinner. Semi-formal. The fancy night. Kids look unreal in proper clothes." type="te" note="Dress code" nc="tg" />
         <TB t="1930" tx="Farewell show at the theatre. Bring something to wipe your eyes. It ends with Mickey waving goodbye." type="pk" />
         <TB t="2100" tx="Last deck walk. Stars above. Ocean below. Silence. Do not skip this." type="te" />
         <TB t="2130" tx="Kids to bed. Settle gratuities via Navigator app. Set 0600 alarm." />
         <TB t="2200" tx="BAGS OUT. Outside cabin door. Hard deadline." type="cr" note="Hard deadline" nc="tr" />
       </DayCard>
 
-      <DayCard n={5} cls="dn5" title="🌅 Disembarkation" sub="Home to Macpherson · Mission complete">
-        <TB t="0600" tx="Wake. Breakfast at Cabanas — room key still works until you physically leave the ship." type="te" />
+      <DayCard n={5} cls="dn5" title="🌅 Disembarkation" sub="Home to Macpherson · Mission complete"
+        defaultOpen={cruiseDay===5} isPast={false}>
+        <TB t="0600" tx="Wake. Breakfast at Pixar Market — room key still works until you physically leave the ship." type="te" />
         <TB t="0730" tx="Head to disembarkation lounge. Check Navigator app for your colour/zone assignment." />
         <TB t="0830" tx="Disembark. Collect labelled bags at terminal. Clear customs." />
         <TB t="0900" tx="Book GrabXL home. Macpherson. ~30 min, ~SGD 30–40. Kids will fall asleep within 10 minutes." type="pk" note="Chan family: mission complete" nc="tp" />
@@ -921,7 +1226,7 @@ function DiningTab({ rotation, setRotation }) {
   return (
     <div className="content">
       <div className="hl b" style={{marginBottom:'10px'}}>
-        📋 You rotate through all 3 restaurants over 4 nights. Your servers follow you — get to know them on Night 1.
+        📋 You rotate through your assigned restaurants over 4 nights. Your servers follow you — get to know them on Night 1.
       </div>
 
       <div className="shdr">🗓️ Set Your Rotation</div>
@@ -939,7 +1244,7 @@ function DiningTab({ rotation, setRotation }) {
       </div>
 
       <div className="hl" style={{marginBottom:'12px',fontSize:'11.5px'}}>
-        💡 Tip: Schedule <strong>Hollywood Spotlight Club</strong> on Night 1 or 2 when energy is high. Schedule <strong>Enchanted Summer</strong> on the same night as BBB for your 9yo's princess evening.
+        💡 Tip: Schedule <strong>Hollywood Spotlight Club</strong> on Night 1 or 2 when energy is high. Schedule <strong>Enchanted Summer</strong> on the same night as BBB for your birthday girl's princess evening.
       </div>
 
       {rotation.some(r=>r) ? (
@@ -970,21 +1275,36 @@ function DiningTab({ rotation, setRotation }) {
   );
 }
 
-function ShowsTab() {
+function ShowsTab({ seenShows, setSeenShows }) {
+  const isSeen = name => seenShows.includes(name);
+  const toggleSeen = name => setSeenShows(prev =>
+    prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+  );
+  const seenCount = SHOWS.filter(s => isSeen(s.name)).length;
   return (
     <div className="content">
       <div className="hl" style={{marginBottom:'10px'}}>
         🎭 Book shows via the Navigator app on boarding day. Second showings are always less crowded and identical in quality.
       </div>
-      <div className="shdr">🎬 All Shows & Events</div>
-      {SHOWS.map((s,i) => <ShowCard key={i} show={s} />)}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'3px'}}>
+        <div className="shdr" style={{margin:0}}>🎬 All Shows & Events</div>
+        <div style={{fontSize:'11px',color:'rgba(255,255,255,.4)',fontWeight:700}}>
+          {seenCount}/{SHOWS.length} seen
+        </div>
+      </div>
+      <div className="prog" style={{marginBottom:'10px'}}>
+        <div className="prog-fill" style={{width:`${seenCount/SHOWS.length*100}%`,background:'linear-gradient(90deg,#6ddb80,#2d8a4a)'}} />
+      </div>
+      {SHOWS.map((s,i) => (
+        <ShowCard key={i} show={s} seen={isSeen(s.name)} onToggleSeen={() => toggleSeen(s.name)} />
+      ))}
       <div className="card" style={{marginTop:'12px'}}>
-        <div className="card-title">🎟️ Universal Seating Rules</div>
+        <div className="card-title">🎟️ Seating Rules (Real Passenger Intel)</div>
         <ul className="lst">
-          <li><div className="dot dg" /><strong>Rows 5–12, centre orchestra</strong> = sweet spot for all main-stage shows. Effects, sight lines, and sound are all best here.</li>
-          <li><div className="dot dr" />Avoid extreme side seats — lighting and projection effects are centre-weighted.</li>
-          <li><div className="dot dbl" />Kids on aisle seats. The first 3 rows are too close for shows with ceiling projections.</li>
+          <li><div className="dot dg" /><strong>FRONT rows are best for Seas the Adventure and Remember</strong> — that's where snow and confetti effects land. Ignore any guide saying rows 5-12.</li>
+          <li><div className="dot dbl" />Kids on aisle seats. Arrive 20-25 min early to secure front section.</li>
           <li><div className="dot dg" />Second show = same quality, 40% fewer people. Always prefer the second showing unless you need an early night.</li>
+          <li><div className="dot dr" />No photography or recording in the Walt Disney Theatre. Phones away.</li>
           <li><div className="dot dr" />For Lion King fireworks: <strong>Deck 18/19 right side near the waterslide staircase</strong> (confirmed May 2026 — NOT stern). Arrive 30-45 min early. Only fireworks show at sea on any cruise ship worldwide.</li>
         </ul>
       </div>
@@ -1030,18 +1350,90 @@ function PackTab({ packed, setPacked }) {
   );
 }
 
-function SecretsTab() {
+function SecretsTab({ userIntel = [] }) {
+  const CONF = {
+    verified:  {icon:'🟢',label:'Verified',  color:'#6ddb80',bg:'rgba(45,138,74,.15)', border:'rgba(45,138,74,.3)'},
+    reported:  {icon:'🟡',label:'Reported',  color:'#ffb347',bg:'rgba(180,100,0,.15)', border:'rgba(180,100,0,.3)'},
+    unverified:{icon:'🔴',label:'Unverified',color:'#ff8091',bg:'rgba(196,30,58,.15)',border:'rgba(196,30,58,.3)'},
+  };
+  const today = Date.now();
+  const daysOld = (dateStr) => dateStr
+    ? Math.floor((today - new Date(dateStr).getTime()) / 86400000)
+    : null;
+  const [expanded, setExpanded] = useState({});
+  const toggle = (id) => setExpanded(p => ({...p,[id]:!p[id]}));
+
   return (
     <div className="content">
       <div className="hl" style={{marginBottom:'10px'}}>
-        💎 These are what the average tourist misses. Read this tab once, remember it always.
+        💎 Tap any gem to read it. These are what the average tourist misses.
       </div>
-      {GEMS.map((g,i)=>(
-        <div key={i} className="gem" data-n={String(i+1).padStart(2,'0')}>
-          <div className="gem-title">✦ {g.t}</div>
-          <div className="gem-text" dangerouslySetInnerHTML={{__html:g.tx}} />
-        </div>
-      ))}
+
+      {userIntel.length > 0 && (
+        <>
+          <div className="shdr" style={{marginBottom:'8px'}}>⚓ Your Intel</div>
+          {userIntel.map((g, i) => {
+            const c = CONF[g.conf] || CONF.unverified;
+            const age = daysOld(g.verified_date);
+            const stale = age !== null && age > (g.stale_after_days || 60);
+            const isOpen = !!expanded[`ui_${i}`];
+            return (
+              <div key={g.id || i} onClick={() => toggle(`ui_${i}`)} style={{
+                background:'linear-gradient(135deg,rgba(20,8,50,.5) 0%,rgba(8,4,28,.7) 100%)',
+                border:'1px solid rgba(124,58,237,.28)',borderRadius:'12px',
+                padding:'11px 13px',marginBottom:'8px',cursor:'pointer',
+              }}>
+                <div style={{display:'flex',alignItems:'center',gap:'7px',flexWrap:'wrap'}}>
+                  <div style={{color:'#c4b5fd',fontSize:'13px',fontWeight:700,flex:1}}>⚓ {g.t}</div>
+                  <span style={{fontSize:'9px',fontWeight:700,padding:'2px 7px',borderRadius:'10px',
+                    color:c.color,background:c.bg,border:`1px solid ${c.border}`,whiteSpace:'nowrap'}}>
+                    {c.icon} {c.label}</span>
+                  {stale && <span style={{fontSize:'9px',fontWeight:700,padding:'2px 7px',borderRadius:'10px',
+                    color:'#ffb347',background:'rgba(180,100,0,.15)',border:'1px solid rgba(180,100,0,.3)'}}>⚠️</span>}
+                  <span style={{color:'rgba(255,255,255,.25)',fontSize:'10px'}}>{isOpen?'▲':'▼'}</span>
+                </div>
+                {isOpen && <>
+                  <div style={{color:'rgba(255,255,255,.72)',fontSize:'12px',lineHeight:1.5,marginTop:'8px'}}>{g.tx}</div>
+                  <div style={{fontSize:'10px',color:'rgba(255,255,255,.22)',marginTop:'5px'}}>{g.src} · {g.verified_date}</div>
+                </>}
+              </div>
+            );
+          })}
+        </>
+      )}
+
+      {GEMS.map((g, i) => {
+        const c = CONF[g.conf] || CONF.unverified;
+        const age = daysOld(g.verified_date);
+        const stale = age !== null && age > g.stale_after_days;
+        const isOpen = !!expanded[g.id];
+        return (
+          <div key={g.id} onClick={() => toggle(g.id)} className="gem"
+            data-n={String(i+1).padStart(2,'0')} style={{cursor:'pointer'}}>
+            <div style={{display:'flex',alignItems:'center',gap:'7px',flexWrap:'wrap'}}>
+              <div className="gem-title" style={{margin:0,flex:1}}>✦ {g.t}</div>
+              <span style={{fontSize:'9px',fontWeight:700,padding:'2px 7px',borderRadius:'10px',
+                letterSpacing:'.5px',color:c.color,background:c.bg,border:`1px solid ${c.border}`,
+                whiteSpace:'nowrap'}}>{c.icon} {c.label}</span>
+              {stale && <span style={{fontSize:'9px',fontWeight:700,padding:'2px 7px',borderRadius:'10px',
+                color:'#ffb347',background:'rgba(180,100,0,.15)',border:'1px solid rgba(180,100,0,.3)',
+                whiteSpace:'nowrap'}}>⚠️</span>}
+              <span style={{color:'rgba(255,255,255,.25)',fontSize:'10px'}}>{isOpen?'▲':'▼'}</span>
+            </div>
+            {isOpen && <>
+              <div className="gem-text" style={{marginTop:'8px'}} dangerouslySetInnerHTML={{__html:g.tx}} />
+              <div style={{display:'flex',gap:'6px',flexWrap:'wrap',marginTop:'6px',alignItems:'center'}}>
+                <div style={{fontSize:'10px',color:'rgba(255,255,255,.25)'}}>Source: {g.src}</div>
+                {g.tags?.map(tag=>(
+                  <span key={tag} style={{fontSize:'9px',color:'rgba(255,255,255,.2)',
+                    background:'rgba(255,255,255,.04)',borderRadius:'6px',padding:'1px 6px',
+                    border:'1px solid rgba(255,255,255,.07)'}}>#{tag}</span>
+                ))}
+              </div>
+            </>}
+          </div>
+        );
+      })}
 
       <div className="shdr" style={{marginTop:'4px'}}>💰 Tipping Guide</div>
       <div className="card">
@@ -1086,7 +1478,7 @@ function SecretsTab() {
       <div className="card">
         <ul className="lst">
           <li><div className="dot dg" /><strong>Magnets only.</strong> No tape, adhesives, or gel stickers. Door damage carries a <strong>USD 100 repair fee</strong> effective June 3.</li>
-          <li><div className="dot dr" /><strong>Over-the-door organizers are now banned</strong> (June 3 policy). Decorations on the door face only — not hallway walls or ceilings. No sound or video decorations.</li>
+          <li><div className="dot dr" /><strong>Over-the-door organizers are now banned</strong> (June 3 policy). Decorations on door face only — not hallway walls or ceilings.</li>
           <li><div className="dot dg" />Print designs, laminate, attach adhesive magnets to back. SGD 15–20 from Shopee or Daiso.</li>
           <li><div className="dot dbl" />Popular: family name + cabin number, kids' favourite characters, adventure/ocean theme.</li>
           <li><div className="dot dbl" />Fish Extender pouch on a magnetic hook is still fine — it is not an over-door organizer.</li>
@@ -1096,87 +1488,699 @@ function SecretsTab() {
   );
 }
 
+function EmergencyPanel({ onClose }) {
+  return (
+    <div style={{
+      position:'fixed',top:0,left:'50%',transform:'translateX(-50%)',
+      width:'100%',maxWidth:'430px',height:'100%',
+      background:'rgba(30,0,0,.97)',zIndex:400,display:'flex',flexDirection:'column',
+    }}>
+      <div style={{
+        padding:'16px 16px 14px',
+        background:'linear-gradient(145deg,#3d0000 0%,#600000 100%)',
+        borderBottom:'2px solid rgba(196,30,58,.5)',
+        display:'flex',alignItems:'center',gap:'10px',
+      }}>
+        <div style={{flex:1}}>
+          <div style={{fontFamily:"'Cinzel Decorative','Times New Roman',serif",
+            fontSize:'13px',color:'#ff8091',letterSpacing:'2px',textTransform:'uppercase'}}>
+            🆘 Emergency
+          </div>
+          <div style={{fontSize:'10px',color:'rgba(255,200,200,.4)',marginTop:'2px'}}>
+            Disney Adventure · Chan Family
+          </div>
+        </div>
+        <button onClick={onClose} style={{
+          background:'rgba(255,255,255,.08)',border:'1px solid rgba(255,255,255,.15)',
+          borderRadius:'8px',padding:'8px 14px',color:'rgba(255,200,200,.7)',
+          fontSize:'13px',cursor:'pointer',fontFamily:"'Nunito',sans-serif",fontWeight:800,
+        }}>✕</button>
+      </div>
+
+      <div style={{flex:1,overflowY:'auto',padding:'16px'}}>
+        {[
+          {icon:'🏠', label:'Our Cabins', value:'Deck 13 · Cabins 13738 & 13730',
+            sub:'Adjacent cabins · Deck 13'},
+          {icon:'🏥', label:'Medical Centre', value:'Ask Guest Services or check Navigator app',
+            sub:'Dial 911 from any ship phone for emergencies'},
+          {icon:'📞', label:'Ship Emergency', value:'Dial 911',
+            sub:'From any ship phone or cabin phone'},
+          {icon:'📱', label:'Disney Navigator App', value:'Help → Guest Services',
+            sub:'Free on ship WiFi — use to contact crew'},
+          {icon:'👨‍👩‍👧', label:'Our Family', value:'2 Adults + 3 Children',
+            sub:'Ages 5, 7, and 9'},
+        ].map(({icon,label,value,sub},i) => (
+          <div key={i} style={{
+            background:'rgba(255,255,255,.04)',border:'1px solid rgba(196,30,58,.2)',
+            borderRadius:'12px',padding:'14px',marginBottom:'10px',
+          }}>
+            <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+              <span style={{fontSize:'24px',flexShrink:0}}>{icon}</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:'10px',fontWeight:800,color:'rgba(255,150,150,.6)',
+                  letterSpacing:'1px',textTransform:'uppercase',marginBottom:'3px'}}>{label}</div>
+                <div style={{fontSize:'14px',fontWeight:800,color:'#fff',lineHeight:1.3}}>{value}</div>
+                <div style={{fontSize:'11px',color:'rgba(255,200,200,.45)',marginTop:'3px'}}>{sub}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <div style={{
+          background:'rgba(196,30,58,.08)',border:'1px solid rgba(196,30,58,.25)',
+          borderRadius:'10px',padding:'12px 14px',marginTop:'4px',
+          fontSize:'11.5px',color:'rgba(255,200,200,.6)',lineHeight:1.6,
+        }}>
+          <strong style={{color:'#ff8091'}}>If child is missing:</strong> Alert any crew member immediately. Use Navigator app → Report Issue. Ship crew will initiate a child location protocol.
+        </div>
+
+        <button onClick={onClose} style={{
+          width:'100%',marginTop:'14px',padding:'14px',borderRadius:'12px',cursor:'pointer',
+          background:'rgba(196,30,58,.2)',border:'2px solid rgba(196,30,58,.4)',
+          color:'#ff8091',fontFamily:"'Nunito',sans-serif",fontSize:'14px',fontWeight:800,
+        }}>Close</button>
+      </div>
+    </div>
+  );
+}
+
+function CaptainsPanel({ setUserIntel, onClose, showToast }) {
+  const [mode, setMode]         = useState('idle');
+  const [inputText, setInput]   = useState('');
+  const [claims, setClaims]     = useState([]);
+  const [decisions, setDecisions] = useState([]);
+  const [idx, setIdx]           = useState(0);
+  const [error, setError]       = useState(null);
+
+  const extract = async () => {
+    if (!inputText.trim()) return;
+    setMode('extracting'); setError(null);
+    const sysPrompt = `You are a cruise intelligence analyst for Disney Adventure (Singapore). Extract specific actionable factual claims from the passenger report. Return a JSON array ONLY. No prose. No markdown fences.
+
+Each item: {"t":"title 5-8 words","tx":"1-2 sentences present tense specific","conf":"high|medium|low","category":"environment|rides|shows|dining|logistics|characters|navigation|facilities","tags":["tag"]}
+
+Rules: Extract ONLY from the provided text. No invention or extrapolation. Skip vague opinions — specific verifiable facts only. Return [] if no specific facts found.`;
+
+    try {
+      let data;
+      const isStandalone = !window.storage;
+
+      if (isStandalone) {
+        const res = await fetch('/api/extract', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ text: inputText.trim() }),
+        });
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(errBody.error || `Server error ${res.status}`);
+        }
+        data = await res.json();
+      } else {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            model:'claude-sonnet-4-20250514', max_tokens:1000,
+            system: sysPrompt,
+            messages:[{role:'user', content:inputText.trim()}],
+          })
+        });
+        data = await res.json();
+      }
+      const raw = data.content?.find(b => b.type==='text')?.text || '[]';
+      const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        setError('No specific claims found. Try pasting a more detailed passenger report.');
+        return setMode('idle');
+      }
+      const safe = parsed.map(c => ({
+        t: c.t || 'Untitled', tx: c.tx || '',
+        conf: ['high','medium','low'].includes(c.conf) ? c.conf : 'medium',
+        category: c.category || 'logistics',
+        tags: Array.isArray(c.tags) ? c.tags : [],
+      }));
+      setClaims(safe); setDecisions(new Array(safe.length).fill(null));
+      setIdx(0); setMode('reviewing');
+    } catch(e) {
+      setError(e.message || "Extraction failed — check internet connection.");
+      setMode('idle');
+    }
+  };
+
+  const decide = (decision) => {
+    const next = [...decisions]; next[idx] = decision; setDecisions(next);
+    if (idx < claims.length - 1) setIdx(i => i + 1);
+    else setMode('done');
+  };
+
+  const saveAccepted = () => {
+    const today = new Date().toISOString().slice(0,10);
+    const ts = Date.now();
+    const accepted = claims
+      .filter((_, i) => decisions[i] === 'accept')
+      .map((c, i) => ({
+        id:`ui_${ts}_${i}`, t:c.t, tx:c.tx,
+        conf: c.conf==='high' ? 'verified' : c.conf==='medium' ? 'reported' : 'unverified',
+        src:"Captain's Mode — Facebook extract",
+        verified_date:today, stale_after_days:60,
+        category:c.category, tags:c.tags, userAdded:true,
+      }));
+    if (accepted.length > 0) {
+      setUserIntel(prev => [...prev, ...accepted]);
+      showToast('✅ Intel Saved', `${accepted.length} item${accepted.length>1?'s':''} added to Secrets tab`);
+    }
+    onClose();
+  };
+
+  const CC = {
+    high:  {color:'#6ddb80',bg:'rgba(45,138,74,.2)',  border:'rgba(45,138,74,.4)'},
+    medium:{color:'#ffb347',bg:'rgba(180,100,0,.2)',  border:'rgba(180,100,0,.4)'},
+    low:   {color:'#ff8091',bg:'rgba(196,30,58,.2)', border:'rgba(196,30,58,.4)'},
+  };
+
+  return (
+    <div style={{position:'fixed',top:0,left:'50%',transform:'translateX(-50%)',
+      width:'100%',maxWidth:'430px',height:'100%',
+      background:'rgba(0,4,18,.99)',zIndex:300,display:'flex',flexDirection:'column'}}>
+
+      <div style={{padding:'14px 16px 12px',borderBottom:'1px solid rgba(124,58,237,.3)',
+        background:'linear-gradient(145deg,#0f0a2e 0%,#1a0830 100%)',
+        display:'flex',alignItems:'center',gap:'10px'}}>
+        <div style={{flex:1}}>
+          <div style={{fontFamily:"'Cinzel Decorative','Times New Roman',serif",fontSize:'11px',
+            color:'#c4b5fd',letterSpacing:'2px',textTransform:'uppercase'}}>⚓ Captain's Mode</div>
+          <div style={{fontSize:'10px',color:'rgba(255,255,255,.35)',marginTop:'2px'}}>
+            Paste report · Claude extracts · You decide what's intel
+          </div>
+        </div>
+        <button onClick={onClose} style={{background:'rgba(255,255,255,.06)',
+          border:'1px solid rgba(255,255,255,.12)',borderRadius:'8px',
+          padding:'7px 12px',color:'rgba(255,255,255,.5)',fontSize:'12px',
+          cursor:'pointer',fontFamily:"'Nunito',sans-serif",fontWeight:800}}>✕</button>
+      </div>
+
+      <div style={{flex:1,overflowY:'auto',padding:'14px'}}>
+
+        {mode==='idle' && (
+          <div>
+            <div style={{fontSize:'12px',color:'rgba(255,255,255,.5)',marginBottom:'12px',lineHeight:1.6}}>
+              Paste any Facebook post, review, or trip report. Claude extracts specific facts — not opinions. Only you decide what gets saved to Secrets.
+            </div>
+            <textarea value={inputText} onChange={e=>setInput(e.target.value)}
+              placeholder="Paste Facebook group post or passenger review here…"
+              style={{width:'100%',minHeight:'140px',
+                background:'rgba(20,8,50,.8)',border:'1px solid rgba(124,58,237,.25)',
+                borderRadius:'10px',color:'rgba(255,255,255,.8)',
+                fontFamily:"'Nunito',sans-serif",fontSize:'12px',
+                padding:'10px 12px',outline:'none',resize:'vertical',lineHeight:1.5}} />
+            {error && (
+              <div style={{background:'rgba(196,30,58,.12)',border:'1px solid rgba(196,30,58,.3)',
+                borderRadius:'8px',padding:'10px 12px',marginTop:'8px',
+                fontSize:'11.5px',color:'#ff8091',lineHeight:1.5}}>{error}</div>
+            )}
+            <button onClick={extract} disabled={!inputText.trim()} style={{
+              width:'100%',marginTop:'10px',padding:'12px',borderRadius:'10px',
+              cursor:inputText.trim()?'pointer':'default',
+              background:inputText.trim()?'rgba(124,58,237,.25)':'rgba(255,255,255,.04)',
+              border:`1px solid ${inputText.trim()?'rgba(124,58,237,.5)':'rgba(255,255,255,.1)'}`,
+              color:inputText.trim()?'#c4b5fd':'rgba(255,255,255,.2)',
+              fontFamily:"'Nunito',sans-serif",fontSize:'13px',fontWeight:800}}>
+              ⚡ Extract Claims
+            </button>
+            <div style={{fontSize:'10px',color:'rgba(255,255,255,.2)',textAlign:'center',marginTop:'6px'}}>
+              Requires internet · Extracts only from pasted text · No hallucination risk
+            </div>
+          </div>
+        )}
+
+        {mode==='extracting' && (
+          <div style={{textAlign:'center',padding:'50px 20px'}}>
+            <div style={{width:40,height:40,border:'3px solid rgba(124,58,237,.2)',
+              borderTopColor:'#c4b5fd',borderRadius:'50%',
+              animation:'spin .8s linear infinite',margin:'0 auto 16px'}} />
+            <div style={{color:'#c4b5fd',fontSize:'13px',fontWeight:700}}>Analysing text…</div>
+            <div style={{color:'rgba(255,255,255,.35)',fontSize:'11px',marginTop:'6px'}}>
+              Claude is identifying specific claims
+            </div>
+          </div>
+        )}
+
+        {mode==='reviewing' && claims[idx] && (() => {
+          const cl = claims[idx];
+          const cc = CC[cl.conf] || CC.medium;
+          return (
+            <div>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'14px'}}>
+                <div style={{fontFamily:"'Cinzel Decorative','Times New Roman',serif",
+                  fontSize:'9px',color:'rgba(255,255,255,.35)',letterSpacing:'1px'}}>
+                  CLAIM {idx+1} OF {claims.length}
+                </div>
+                <div style={{display:'flex',gap:'4px'}}>
+                  {claims.map((_,i) => (
+                    <div key={i} style={{width:8,height:8,borderRadius:'50%',
+                      background:decisions[i]==='accept'?'#6ddb80'
+                        :decisions[i]==='reject'?'rgba(255,255,255,.1)'
+                        :i===idx?'#c4b5fd':'rgba(255,255,255,.07)'}} />
+                  ))}
+                </div>
+              </div>
+              <div style={{background:'linear-gradient(135deg,rgba(20,8,50,.9) 0%,rgba(8,4,28,.95) 100%)',
+                border:'1px solid rgba(124,58,237,.3)',borderRadius:'14px',
+                padding:'16px 14px',marginBottom:'16px',minHeight:'140px'}}>
+                <div style={{display:'flex',gap:'6px',alignItems:'center',marginBottom:'8px',flexWrap:'wrap'}}>
+                  <span style={{fontSize:'9px',fontWeight:700,padding:'2px 7px',borderRadius:'10px',
+                    letterSpacing:'.5px',color:cc.color,background:cc.bg,
+                    border:`1px solid ${cc.border}`}}>{cl.conf}</span>
+                  <span style={{fontSize:'9px',fontWeight:700,padding:'2px 7px',borderRadius:'10px',
+                    color:'rgba(196,181,253,.7)',background:'rgba(124,58,237,.12)',
+                    border:'1px solid rgba(124,58,237,.2)'}}>{cl.category}</span>
+                </div>
+                <div style={{color:'#fff',fontSize:'13.5px',fontWeight:800,
+                  marginBottom:'8px',lineHeight:1.3}}>{cl.t}</div>
+                <div style={{color:'rgba(255,255,255,.7)',fontSize:'12.5px',lineHeight:1.55}}>{cl.tx}</div>
+                {cl.tags?.length > 0 && (
+                  <div style={{display:'flex',gap:'5px',flexWrap:'wrap',marginTop:'10px'}}>
+                    {cl.tags.map((tag,ti) => (
+                      <span key={ti} style={{fontSize:'9px',color:'rgba(255,255,255,.28)',
+                        background:'rgba(255,255,255,.05)',borderRadius:'8px',
+                        padding:'2px 7px',border:'1px solid rgba(255,255,255,.08)'}}>#{tag}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
+                <button onClick={()=>decide('reject')} style={{
+                  padding:'14px',borderRadius:'12px',cursor:'pointer',
+                  background:'rgba(196,30,58,.12)',border:'1px solid rgba(196,30,58,.3)',
+                  color:'#ff8091',fontFamily:"'Nunito',sans-serif",fontSize:'13px',fontWeight:800}}>
+                  ✗ Skip
+                </button>
+                <button onClick={()=>decide('accept')} style={{
+                  padding:'14px',borderRadius:'12px',cursor:'pointer',
+                  background:'rgba(45,138,74,.2)',border:'1px solid rgba(45,138,74,.4)',
+                  color:'#6ddb80',fontFamily:"'Nunito',sans-serif",fontSize:'13px',fontWeight:800}}>
+                  ✓ Add Intel
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+
+        {mode==='done' && (
+          <div>
+            <div style={{textAlign:'center',padding:'20px 0 16px'}}>
+              <div style={{fontSize:'32px',marginBottom:'8px'}}>✅</div>
+              <div style={{color:'#fff',fontSize:'14px',fontWeight:800}}>Review complete</div>
+              <div style={{color:'rgba(255,255,255,.45)',fontSize:'12px',marginTop:'4px'}}>
+                {decisions.filter(d=>d==='accept').length} of {claims.length} claims accepted
+              </div>
+            </div>
+            {claims.filter((_,i)=>decisions[i]==='accept').map((c,i)=>(
+              <div key={i} style={{background:'rgba(45,138,74,.1)',
+                border:'1px solid rgba(45,138,74,.25)',borderRadius:'8px',
+                padding:'10px 12px',marginBottom:'8px'}}>
+                <div style={{color:'#6ddb80',fontSize:'12px',fontWeight:700}}>{c.t}</div>
+                <div style={{color:'rgba(255,255,255,.5)',fontSize:'11px',marginTop:'2px'}}>{c.tx}</div>
+              </div>
+            ))}
+            {decisions.filter(d=>d==='accept').length === 0 && (
+              <div style={{textAlign:'center',color:'rgba(255,255,255,.3)',
+                fontSize:'12px',padding:'10px 0'}}>No claims accepted — nothing to save.</div>
+            )}
+            <button onClick={saveAccepted} style={{
+              width:'100%',marginTop:'12px',padding:'14px',borderRadius:'12px',cursor:'pointer',
+              background:decisions.some(d=>d==='accept')?'rgba(124,58,237,.25)':'rgba(255,255,255,.05)',
+              border:`1px solid ${decisions.some(d=>d==='accept')?'rgba(124,58,237,.5)':'rgba(255,255,255,.1)'}`,
+              color:decisions.some(d=>d==='accept')?'#c4b5fd':'rgba(255,255,255,.25)',
+              fontFamily:"'Nunito',sans-serif",fontSize:'13px',fontWeight:800}}>
+              {decisions.some(d=>d==='accept') ? '💾 Save to Secrets Tab' : 'Close'}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SyncPanel({ encoded, onImport, onClose, showToast }) {
+  const [screen, setScreen]           = useState('home');
+  const [importStr, setImportStr]     = useState('');
+  const [copied, setCopied]           = useState(false);
+  const [qrFailed, setQrFailed]       = useState(false);
+  const [importResult, setImportResult] = useState(null);
+
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(encoded); } catch {}
+    setCopied(true); setTimeout(() => setCopied(false), 3000);
+  };
+
+  const doImport = () => {
+    const ok = onImport(importStr);
+    setImportResult(ok ? 'ok' : 'fail');
+    if (ok) setTimeout(() => { setImportResult(null); onClose(); }, 1500);
+  };
+
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(encoded)}&bgcolor=001220&color=F5C842&margin=10`;
+
+  const backBtn = (
+    <button onClick={() => setScreen('home')} style={{
+      background:'none', border:'none', color:'rgba(255,255,255,.4)',
+      fontFamily:"'Nunito',sans-serif", fontSize:'12px', cursor:'pointer',
+      padding:'0 0 16px', display:'block',
+    }}>← Back</button>
+  );
+
+  return (
+    <div style={{
+      position:'fixed', top:0, left:'50%', transform:'translateX(-50%)',
+      width:'100%', maxWidth:'430px', height:'100%',
+      background:'rgba(0,8,25,.98)', zIndex:300, display:'flex', flexDirection:'column',
+    }}>
+      <div style={{
+        padding:'16px 16px 14px', borderBottom:'1px solid rgba(245,200,66,.2)',
+        display:'flex', alignItems:'center', gap:'10px',
+        background:'linear-gradient(145deg,#001f60 0%,#0B3D91 100%)',
+      }}>
+        <div style={{flex:1}}>
+          <div style={{fontFamily:"'Cinzel Decorative','Times New Roman',serif", fontSize:'11px',
+            color:'var(--gold)', letterSpacing:'2px', textTransform:'uppercase'}}>🔄 Sync With Partner</div>
+        </div>
+        <button onClick={onClose} style={{
+          background:'rgba(255,255,255,.07)', border:'1px solid rgba(255,255,255,.15)',
+          borderRadius:'8px', padding:'8px 14px', color:'rgba(255,255,255,.6)',
+          fontSize:'12px', cursor:'pointer', fontFamily:"'Nunito',sans-serif", fontWeight:800,
+        }}>✕</button>
+      </div>
+
+      <div style={{flex:1, overflowY:'auto', padding:'20px 16px'}}>
+
+        {screen === 'home' && (
+          <div>
+            <div style={{
+              background:'rgba(255,255,255,.05)', borderRadius:'12px',
+              padding:'14px', marginBottom:'20px',
+            }}>
+              <div style={{color:'#fff', fontSize:'13px', fontWeight:800, marginBottom:'8px'}}>
+                Why would I use this?
+              </div>
+              <div style={{color:'rgba(255,255,255,.6)', fontSize:'12px', lineHeight:1.7}}>
+                If you tick off packing items, mark a show as seen, or set the dining plan — your partner's phone doesn't automatically know. Use this to share those updates so you're both looking at the same thing.
+              </div>
+            </div>
+
+            <button onClick={() => setScreen('send')} style={{
+              width:'100%', padding:'18px', borderRadius:'14px', cursor:'pointer',
+              background:'rgba(245,200,66,.1)', border:'2px solid rgba(245,200,66,.3)',
+              marginBottom:'12px', textAlign:'left', display:'flex', alignItems:'center', gap:'14px',
+            }}>
+              <span style={{fontSize:'30px'}}>📤</span>
+              <div>
+                <div style={{color:'var(--gold)', fontFamily:"'Nunito',sans-serif",
+                  fontSize:'14px', fontWeight:800}}>Send my updates to partner</div>
+                <div style={{color:'rgba(255,255,255,.4)', fontSize:'11px', marginTop:'3px',
+                  fontFamily:"'Nunito',sans-serif"}}>
+                  Share packing, checklist &amp; dining plan
+                </div>
+              </div>
+            </button>
+
+            <button onClick={() => setScreen('receive')} style={{
+              width:'100%', padding:'18px', borderRadius:'14px', cursor:'pointer',
+              background:'rgba(74,144,217,.1)', border:'2px solid rgba(74,144,217,.3)',
+              textAlign:'left', display:'flex', alignItems:'center', gap:'14px',
+            }}>
+              <span style={{fontSize:'30px'}}>📥</span>
+              <div>
+                <div style={{color:'#88bfff', fontFamily:"'Nunito',sans-serif",
+                  fontSize:'14px', fontWeight:800}}>Load my partner's updates</div>
+                <div style={{color:'rgba(255,255,255,.4)', fontSize:'11px', marginTop:'3px',
+                  fontFamily:"'Nunito',sans-serif"}}>
+                  They sent me a code — load their changes here
+                </div>
+              </div>
+            </button>
+          </div>
+        )}
+
+        {screen === 'send' && (
+          <div>
+            {backBtn}
+            <div style={{color:'#fff', fontSize:'14px', fontWeight:800, marginBottom:'6px'}}>
+              Share your progress
+            </div>
+            <div style={{color:'rgba(255,255,255,.55)', fontSize:'12.5px', lineHeight:1.7, marginBottom:'20px'}}>
+              <strong style={{color:'rgba(255,255,255,.8)'}}>Step 1</strong> — Tap the button below to copy your progress<br/>
+              <strong style={{color:'rgba(255,255,255,.8)'}}>Step 2</strong> — Paste it into a WhatsApp message to your partner<br/>
+              <strong style={{color:'rgba(255,255,255,.8)'}}>Step 3</strong> — Your partner taps Sync → "Load partner's progress" → pastes it in
+            </div>
+
+            {!qrFailed && (
+              <div style={{textAlign:'center', marginBottom:'16px'}}>
+                <img src={qrUrl} alt="Sync QR" onError={() => setQrFailed(true)}
+                  style={{width:160, height:160, borderRadius:'10px', display:'block',
+                    margin:'0 auto 6px', border:'2px solid rgba(245,200,66,.3)'}} />
+                <div style={{fontSize:'10px', color:'rgba(255,255,255,.25)'}}>
+                  Partner can scan this instead of typing
+                </div>
+              </div>
+            )}
+
+            <button onClick={copy} style={{
+              width:'100%', padding:'16px', borderRadius:'12px', cursor:'pointer',
+              background: copied ? 'rgba(45,138,74,.25)' : 'rgba(245,200,66,.12)',
+              border: `2px solid ${copied ? 'rgba(45,138,74,.6)' : 'rgba(245,200,66,.4)'}`,
+              color: copied ? '#6ddb80' : 'var(--gold)',
+              fontFamily:"'Nunito',sans-serif", fontSize:'14px', fontWeight:800, transition:'all .2s',
+            }}>{copied ? '✅ Copied! Now paste it into WhatsApp' : '📋 Copy my progress'}</button>
+          </div>
+        )}
+
+        {screen === 'receive' && (
+          <div>
+            {backBtn}
+            <div style={{color:'#fff', fontSize:'14px', fontWeight:800, marginBottom:'6px'}}>
+              Load your partner's progress
+            </div>
+            <div style={{color:'rgba(255,255,255,.55)', fontSize:'12.5px', lineHeight:1.7, marginBottom:'20px'}}>
+              Your partner sent you a long code in WhatsApp. Open WhatsApp, copy that message, then paste it into the box below.
+            </div>
+
+            <textarea value={importStr} onChange={e => setImportStr(e.target.value)}
+              placeholder="Paste the code from your partner here…"
+              style={{
+                width:'100%', minHeight:'100px', background:'rgba(0,15,40,.8)',
+                border:'1px solid rgba(74,144,217,.3)', borderRadius:'10px',
+                color:'rgba(255,255,255,.8)', fontFamily:"'Nunito',sans-serif",
+                fontSize:'12px', padding:'11px', outline:'none', resize:'vertical', lineHeight:1.5,
+                marginBottom:'10px',
+              }} />
+
+            {importResult === 'ok' && (
+              <div style={{background:'rgba(45,138,74,.2)', border:'1px solid rgba(45,138,74,.4)',
+                borderRadius:'10px', padding:'14px', marginBottom:'10px',
+                textAlign:'center', color:'#6ddb80', fontWeight:800, fontSize:'13px'}}>
+                ✅ Done! Your app now matches your partner's.
+              </div>
+            )}
+            {importResult === 'fail' && (
+              <div style={{background:'rgba(196,30,58,.15)', border:'1px solid rgba(196,30,58,.35)',
+                borderRadius:'10px', padding:'14px', marginBottom:'10px',
+                color:'#ff8091', fontSize:'12px', lineHeight:1.6}}>
+                ❌ That didn't work. Make sure you copied the entire message from WhatsApp — it's a very long string of letters and numbers.
+              </div>
+            )}
+
+            <button onClick={doImport} disabled={!importStr.trim()} style={{
+              width:'100%', padding:'16px', borderRadius:'12px',
+              cursor: importStr.trim() ? 'pointer' : 'default',
+              background: importStr.trim() ? 'rgba(74,144,217,.2)' : 'rgba(255,255,255,.04)',
+              border: `2px solid ${importStr.trim() ? 'rgba(74,144,217,.5)' : 'rgba(255,255,255,.1)'}`,
+              color: importStr.trim() ? '#88bfff' : 'rgba(255,255,255,.2)',
+              fontFamily:"'Nunito',sans-serif", fontSize:'14px', fontWeight:800,
+            }}>Load onto this phone</button>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────── MAIN APP ────────────────────────────────
 
 const TABS = [
-  {id:'kids',icon:'🎡',label:'Kids'},
-  {id:'tasks',icon:'✅',label:'Tasks'},
-  {id:'days',icon:'📅',label:'Days'},
+  {id:'days',  icon:'📅',label:'Days'},
+  {id:'tasks', icon:'✅',label:'Tasks'},
+  {id:'rides', icon:'🎢',label:'Rides'},
   {id:'dining',icon:'🍽️',label:'Dining'},
-  {id:'shows',icon:'🎭',label:'Shows'},
-  {id:'pack',icon:'🎒',label:'Pack'},
+  {id:'shows', icon:'🎭',label:'Shows'},
+  {id:'pack',  icon:'🎒',label:'Pack'},
   {id:'secrets',icon:'💎',label:'Secrets'},
 ];
 
 const TOTAL_CHECK = CHECKLIST_ITEMS.flatMap(c=>c.items).length;
 const TOTAL_PACK = PACKING.flatMap(c=>c.items).length;
 
+// Simple merge: take the union of checked/packed items, latest cruiseDay, union of seenShows
+function mergeStates(local, remote) {
+  if (!remote) return local;
+  return {
+    ...local,
+    checks: local.checks.map((v,i) => v || (remote.checks?.[i] ?? false)),
+    packed: local.packed.map((v,i) => v || (remote.packed?.[i] ?? false)),
+    rotation: local.rotation,
+    ridden: local.ridden,
+    cruiseDay: Math.max(local.cruiseDay || 1, remote.cruiseDay || 1),
+    seenShows: [...new Set([...(local.seenShows||[]), ...(remote.seenShows||[])])],
+    heatMode: local.heatMode || remote.heatMode || false,
+    userIntel: [...(local.userIntel||[]), ...(remote.userIntel||[]).filter(r =>
+      !(local.userIntel||[]).some(l => l.id === r.id)
+    )],
+    _ts: Math.max(local._ts||0, remote._ts||0),
+  };
+}
+
 export default function App() {
-  const [tab, setTab] = useState('kids');
+  const RIDE_INIT = (() => {
+    const o = {};
+    KIDS_DATA.forEach(k => { o[k.k]={}; RIDES.forEach(r => { o[k.k][r.id]=false; }); });
+    return o;
+  })();
+
+  const [tab, setTab] = useState('days');
   const [checks, setChecks] = useState(Array(TOTAL_CHECK).fill(false));
   const [packed, setPacked] = useState(Array(TOTAL_PACK).fill(false));
   const [rotation, setRotation] = useState(['','','','']);
-  const [refreshing, setRefreshing] = useState(false);
+  const [ridden, setRidden] = useState(RIDE_INIT);
+  const [cruiseDay, setCruiseDay] = useState(1);
+  const [userIntel, setUserIntel] = useState([]);
+  const [heatMode, setHeatMode] = useState(false);
+  const [seenShows, setSeenShows] = useState([]);
+  const [liveSyncConfig, setLiveSyncConfig] = useState({ gistId:'', token:'', enabled:false });
+  const [syncStatus, setSyncStatus] = useState({ status:'idle', lastSync:null, error:null });
+  const [syncOpen, setSyncOpen] = useState(false);
+  const [captainOpen, setCaptainOpen] = useState(false);
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [toast, setToast] = useState(null);
-  const touchStartY = useRef(null);
   const scrollRef = useRef(null);
+  const heroLongPressTimer = useRef(null);
+  const stateRef = useRef({});
+
+  useEffect(() => {
+    store.get('checks').then(v => v && setChecks(v));
+    store.get('packed').then(v => v && setPacked(v));
+    store.get('rotation').then(v => v && setRotation(v));
+    store.get('ridden').then(v => v && setRidden(v));
+    store.get('cruiseDay').then(v => v !== null && setCruiseDay(v));
+    store.get('userIntel').then(v => v && setUserIntel(v));
+    store.get('heatMode').then(v => v !== null && setHeatMode(v));
+    store.get('seenShows').then(v => v && setSeenShows(v));
+    store.get('liveSyncConfig').then(v => v && setLiveSyncConfig(v));
+  }, []);
+
+  useEffect(() => { store.set('checks', checks); }, [checks]);
+  useEffect(() => { store.set('packed', packed); }, [packed]);
+  useEffect(() => { store.set('rotation', rotation); }, [rotation]);
+  useEffect(() => { store.set('ridden', ridden); }, [ridden]);
+  useEffect(() => { store.set('cruiseDay', cruiseDay); }, [cruiseDay]);
+  useEffect(() => { store.set('userIntel', userIntel); }, [userIntel]);
+  useEffect(() => { store.set('heatMode', heatMode); }, [heatMode]);
+  useEffect(() => { store.set('seenShows', seenShows); }, [seenShows]);
+  useEffect(() => { store.set('liveSyncConfig', liveSyncConfig); }, [liveSyncConfig]);
+
+  useEffect(() => {
+    stateRef.current = { checks, packed, rotation, ridden, cruiseDay, seenShows, heatMode, userIntel };
+  }, [checks, packed, rotation, ridden, cruiseDay, seenShows, heatMode, userIntel]);
+
+  useEffect(() => {
+    if (!liveSyncConfig.enabled || !liveSyncConfig.gistId || !liveSyncConfig.token) return;
+    const gistUrl = `https://api.github.com/gists/${liveSyncConfig.gistId}`;
+    const headers = {
+      'Authorization': `token ${liveSyncConfig.token}`,
+      'Content-Type': 'application/json',
+    };
+
+    const doSync = async () => {
+      setSyncStatus(s => ({ ...s, status:'syncing' }));
+      try {
+        const res = await fetch(gistUrl, { headers });
+        if (!res.ok) throw new Error(`GitHub ${res.status} — check Gist ID and token`);
+        const gistData = await res.json();
+        const raw = gistData.files?.['state.json']?.content;
+        const remote = raw ? JSON.parse(raw) : null;
+
+        const local = { ...stateRef.current, _ts: Date.now() };
+        const merged = mergeStates(local, remote);
+
+        setChecks(merged.checks);
+        setPacked(merged.packed);
+        setRotation(merged.rotation);
+        setRidden(merged.ridden);
+        setCruiseDay(merged.cruiseDay);
+        setSeenShows(merged.seenShows);
+        setHeatMode(merged.heatMode);
+        setUserIntel(merged.userIntel);
+
+        await fetch(gistUrl, {
+          method: 'PATCH', headers,
+          body: JSON.stringify({ files: { 'state.json': { content: JSON.stringify(merged) } } }),
+        });
+
+        setSyncStatus({ status:'synced', lastSync:Date.now(), error:null });
+      } catch(e) {
+        setSyncStatus(s => ({ ...s, status:'error', error:e.message }));
+      }
+    };
+
+    doSync();
+    const id = setInterval(doSync, 30000);
+    return () => clearInterval(id);
+  }, [liveSyncConfig.enabled, liveSyncConfig.gistId, liveSyncConfig.token]);
 
   const showToast = (title, msg) => {
     setToast({ title, msg });
     setTimeout(() => setToast(null), 5000);
   };
 
-  const fetchFreshTip = useCallback(async () => {
-    if (refreshing) return;
-    setRefreshing(true);
+  const showGemOfDay = () => {
+    const gem = GEMS[Math.floor(Date.now() / 86400000) % GEMS.length];
+    const txt = gem.tx.replace(/<[^>]*>/g, '');
+    showToast('💎 ' + gem.t, txt.length > 140 ? txt.slice(0, 137) + '…' : txt);
+  };
+
+  const exportState = () => btoa(unescape(encodeURIComponent(JSON.stringify({
+    v:1, _ts:Date.now(), checks, packed, rotation, ridden, cruiseDay,
+    seenShows, userIntel, heatMode,
+  }))));
+  const importState = (str) => {
     try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 200,
-          messages: [{
-            role: 'user',
-            content: 'Give ONE crisp insider tip for Disney Adventure cruise Singapore 2025. Format: {"title":"short title","tip":"2 sentence tip"}. JSON only.'
-          }]
-        })
-      });
-      const data = await res.json();
-      const text = data.content?.find(b => b.type === 'text')?.text || '';
-      const clean = text.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(clean);
-      showToast('✨ Fresh Tip', parsed.tip);
-    } catch {
-      showToast('✨ Tip of the Voyage', 'Check the Navigator app every morning at 7am — new character meet slots sometimes open overnight from cancellations.');
-    } finally {
-      setRefreshing(false);
-    }
-  }, [refreshing]);
-
-  const onTouchStart = (e) => {
-    if (scrollRef.current?.scrollTop === 0) {
-      touchStartY.current = e.touches[0].clientY;
-    }
+      const p = JSON.parse(decodeURIComponent(escape(atob(str.trim()))));
+      if (p.v !== 1) return false;
+      if (Array.isArray(p.checks)   && p.checks.length   === TOTAL_CHECK) setChecks(p.checks);
+      if (Array.isArray(p.packed)   && p.packed.length   === TOTAL_PACK)  setPacked(p.packed);
+      if (Array.isArray(p.rotation) && p.rotation.length === 4)           setRotation(p.rotation);
+      if (p.ridden   && typeof p.ridden   === 'object') setRidden(p.ridden);
+      if (p.cruiseDay >= 1 && p.cruiseDay <= 5)         setCruiseDay(p.cruiseDay);
+      if (Array.isArray(p.seenShows))                   setSeenShows(p.seenShows);
+      if (Array.isArray(p.userIntel))                   setUserIntel(p.userIntel);
+      if (typeof p.heatMode === 'boolean')              setHeatMode(p.heatMode);
+      return true;
+    } catch { return false; }
   };
 
-  const onTouchEnd = (e) => {
-    if (touchStartY.current !== null) {
-      const dy = e.changedTouches[0].clientY - touchStartY.current;
-      if (dy > 70) fetchFreshTip();
-      touchStartY.current = null;
-    }
+  const startLongPress = () => {
+    heroLongPressTimer.current = setTimeout(() => setCaptainOpen(true), 800);
   };
+  const cancelLongPress = () => clearTimeout(heroLongPressTimer.current);
 
   const renderTab = () => {
     switch (tab) {
-      case 'kids': return <KidsTab />;
+      case 'rides': return <KidsTab ridden={ridden} setRidden={setRidden} />;
       case 'tasks': return <ChecklistTab checks={checks} setChecks={setChecks} />;
-      case 'days': return <DaysTab />;
+      case 'days': return <DaysTab cruiseDay={cruiseDay} setCruiseDay={setCruiseDay} heatMode={heatMode} setHeatMode={setHeatMode} />;
       case 'dining': return <DiningTab rotation={rotation} setRotation={setRotation} />;
-      case 'shows': return <ShowsTab />;
+      case 'shows': return <ShowsTab seenShows={seenShows} setSeenShows={setSeenShows} />;
       case 'pack': return <PackTab packed={packed} setPacked={setPacked} />;
-      case 'secrets': return <SecretsTab />;
+      case 'secrets': return <SecretsTab userIntel={userIntel} />;
       default: return null;
     }
   };
@@ -1191,45 +2195,97 @@ export default function App() {
         <div className="hero">
           <div className="hero-glow" />
           <div className="hero-castle">🏰</div>
-          <div className="hero-title">The Chan Family</div>
-          <div className="hero-ship">✦ Disney Adventure · Singapore ✦</div>
+          <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between'}}>
+            <div>
+              <div className="hero-title"
+                onMouseDown={startLongPress} onMouseUp={cancelLongPress} onMouseLeave={cancelLongPress}
+                onTouchStart={startLongPress} onTouchEnd={cancelLongPress}
+                style={{userSelect:'none'}}>
+                The Chan Family
+              </div>
+              <div className="hero-ship">✦ Disney Adventure · Singapore ✦</div>
+            </div>
+            <div style={{display:'flex',gap:'6px',flexShrink:0,marginTop:'2px'}}>
+              <button onClick={showGemOfDay} style={{
+                background:'rgba(245,200,66,.12)',border:'1px solid rgba(245,200,66,.28)',
+                borderRadius:'8px',padding:'6px 10px',cursor:'pointer',
+                color:'var(--gold)',fontSize:'14px',fontFamily:"'Nunito',sans-serif",
+              }} title="Tip of the day">✨</button>
+              <button onClick={() => setSyncOpen(true)} style={{
+                background:'rgba(245,200,66,.12)',border:'1px solid rgba(245,200,66,.28)',
+                borderRadius:'8px',padding:'6px 10px',cursor:'pointer',
+                color:'var(--gold)',fontSize:'11px',fontWeight:800,
+                fontFamily:"'Nunito',sans-serif",
+              }}>🔄 Sync</button>
+            </div>
+          </div>
           <div className="hero-divider" />
           <div style={{fontSize:'11px',color:'rgba(255,255,255,.5)'}}>
             4 Nights · All Sea Days · 2 Adults + 3 Kids (5,7,9) · Deck 13 · Board 1245
           </div>
+          {liveSyncConfig.enabled && (
+            <div style={{display:'flex',alignItems:'center',gap:'5px',marginTop:'5px'}}>
+              {syncStatus.status === 'syncing' && <>
+                <span style={{fontSize:'10px'}}>🔄</span>
+                <span style={{fontSize:'10px',color:'rgba(245,200,66,.6)'}}>Syncing…</span>
+              </>}
+              {syncStatus.status === 'synced' && <>
+                <span style={{fontSize:'10px'}}>🟢</span>
+                <span style={{fontSize:'10px',color:'rgba(255,255,255,.35)'}}>
+                  Synced {syncStatus.lastSync ? `${Math.max(0,Math.floor((Date.now()-syncStatus.lastSync)/60000))}m ago` : 'just now'}
+                </span>
+              </>}
+              {syncStatus.status === 'error' && <>
+                <span style={{fontSize:'10px'}}>🔴</span>
+                <span style={{fontSize:'10px',color:'rgba(255,128,145,.7)'}}>Sync error — check WiFi</span>
+              </>}
+              {syncStatus.status === 'idle' && <>
+                <span style={{fontSize:'10px',color:'rgba(255,255,255,.2)'}}>◉ Live sync ready</span>
+              </>}
+            </div>
+          )}
           <div className="hero-pills" style={{marginTop:'8px'}}>
             <span className="pill pg">🎆 Lion King Fireworks</span>
             <span className="pill pr">🔴 Iron Cycle</span>
             <span className="pill pb">🎭 5 Shows</span>
             <span className="pill pp">👑 BBB</span>
-            <span className="pill pb">💧 Water Slides</span>
+            <span className="pill pg">🌊 Water Slides</span>
           </div>
         </div>
 
-        {/* Pull to refresh hint */}
-        {refreshing && (
-          <div className="ptr">
-            <span className="ptr-spin" />
-            Fetching fresh tip from the ship…
-          </div>
+        {emergencyOpen && <EmergencyPanel onClose={() => setEmergencyOpen(false)} />}
+        {captainOpen && (
+          <CaptainsPanel setUserIntel={setUserIntel} onClose={() => setCaptainOpen(false)} showToast={showToast} />
+        )}
+        {syncOpen && (
+          <SyncPanel
+            encoded={exportState()}
+            onImport={importState}
+            onClose={() => setSyncOpen(false)}
+            showToast={showToast}
+          />
         )}
 
-        {/* Scroll content */}
-        <div
-          className="scroll-wrap"
-          ref={scrollRef}
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-        >
-          {!refreshing && (
-            <div style={{textAlign:'center',padding:'6px 0 0',fontSize:'10px',color:'rgba(255,255,255,.2)'}}>
-              ↓ Pull down for a fresh tip
-            </div>
-          )}
+        {!emergencyOpen && !captainOpen && !syncOpen && (
+          <button
+            onClick={() => setEmergencyOpen(true)}
+            style={{
+              position:'fixed',bottom:'82px',right:'16px',
+              width:'44px',height:'44px',borderRadius:'50%',
+              background:'rgba(196,30,58,.85)',border:'2px solid rgba(255,100,100,.5)',
+              color:'#fff',fontSize:'18px',cursor:'pointer',
+              display:'flex',alignItems:'center',justifyContent:'center',
+              zIndex:150,boxShadow:'0 4px 20px rgba(196,30,58,.6)',
+              transition:'transform .15s',
+            }}
+            title="Emergency information"
+          >🆘</button>
+        )}
+
+        <div className="scroll-wrap" ref={scrollRef}>
           {renderTab()}
         </div>
 
-        {/* Toast */}
         {toast && (
           <div className="toast">
             <div className="toast-title">{toast.title}</div>
@@ -1237,7 +2293,6 @@ export default function App() {
           </div>
         )}
 
-        {/* Tab bar */}
         <div className="tab-bar">
           {TABS.map(t => (
             <button key={t.id} className={`tab-btn ${tab===t.id?'act':''}`} onClick={() => setTab(t.id)}>
