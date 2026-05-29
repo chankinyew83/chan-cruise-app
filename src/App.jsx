@@ -345,8 +345,7 @@ const RESTAURANTS = {
     ],
     insider:[
       '🏰 Enchanted Summer is in Town Square — the Disney Princess area. Your 9yo is already in the right frame of mind walking here.',
-      '✨ Schedule this on the same night as BBB for a full princess evening for your youngest.',
-      '🌿 The most serene of the 6 rotational restaurants. Best for Night 3 or 4 when the family\'s energy is more mellow.',
+      '✨ Schedule this on the same night as BBB for a full princess evening for your youngest.',      '🌿 The most serene of the 6 rotational restaurants. Best for Night 3 or 4 when the family\'s energy is more mellow.',
       '🌸 BBB (Bibbidi Bobbidi Boutique) is steps away. The two experiences pair perfectly for one magical evening.',
     ],
     dress:'Smart casual',
@@ -407,7 +406,7 @@ const SHOWS = [
   {name:"The Lion King: Celebration in the Sky",type:"Fireworks at Sea",em:"🎆",dur:"~15 min",
     desc:"The ONLY fireworks show at sea on any cruise ship worldwide. Confirmed for Disney Adventure. This is a standalone dedicated fireworks event — not tied to any themed night. Absolutely unmissable.",
     when:"Night 3 (typical). Check Navigator app — exact timing varies.",
-    seat:"Upper deck, stern-facing for best angle. Get there 30-45 min early. Real passengers say spots go FAST.",
+    seat:"Deck 18/19 RIGHT SIDE near the waterslide staircase — confirmed by May 2026 passengers. NOT stern-facing as earlier guides said. Get there 30-45 min early. Spots go FAST.",
     book:"No booking. Show up early and claim your stern-facing position.",
     km:"🌟🌟🌟🌟🌟",dnm:true},
   {name:"Let's Set Sail",type:"Disney Imagination Garden · Embarkation Show",em:"🎊",dur:"~30 min",
@@ -510,7 +509,7 @@ const PACKING = [
   ]},
   {cat:"🎒 Cruise-Specific Must-Haves",items:[
     {t:"Door magnet set (pre-made)",tip:"No tape. Pre-make at home. Shopee or print + laminate + adhesive magnets."},
-    {t:"Magnetic hooks × 3",tip:"For Fish Extender bag + hanging wet swimwear + towels outside cabin."},
+    {t:"Magnetic hooks × 2",tip:"For Fish Extender bag + in-cabin use. Over-the-door organizers are now banned under June 3 policy. Hooks are fine; hanging racks/organizers are not."},
     {t:"Small mesh laundry bags",tip:"Toss kids' wet swimwear in. Doesn't smell up the luggage."},
     {t:"Zip-lock bags (varied sizes)",tip:"For wet stuff, snacks, sandy shoes. Seriously — bring lots."},
     {t:"Pixie Dusting gifts (small trinkets)",tip:"⚠️ Items HAVE been stolen from door pouches on Disney Adventure. Use a lockable pouch. Keychains, Singapore sweets, stickers for ~8-10 cabins."},
@@ -522,7 +521,7 @@ const PACKING = [
 
 const GEMS = [
   {t:"HEAT KILLS YOUR DAY PLAN",tx:"Singapore humidity is brutal. Real passengers report the open top deck becomes a ghost town by 1000. One show (Jack-Jack's Diaper Dash) had to <strong>relocate mid-event</strong> because the mat was too hot for infants. Rule: all outdoor activities before 1000 or after 1700. Non-negotiable."},
-  {t:"Ironcycle Goes Down. Have a Backup.",tx:"<strong>No reservations. Hours 1000–2100.</strong> Confirmed booking trick: check the app right before release times — <strong>12:28–12:29pm, 2:59pm, 3:44pm</strong>. Slots are gone if you check on the hour or half-hour. Downtime peaks midday (heat kills electronics — confirmed by a Disney ride engineer onboard). Queue at 0930 for the 1000 open, or try during first dinner seating (~1800) when crowds drop."},
+  {t:"Ironcycle — Walk Up, No App Booking",tx:"<strong>No app reservations — just queue up.</strong> Opens ~0930–1000. May 2026 passengers waited ~1 hour at peak. Best strategy: arrive at Deck 19 by 0930 for first run, or try during first dinner seating (~1800) when crowds drop. <strong>Closed-toe secured shoes required — barefoot or slippers get you turned away.</strong> Downtime peaks midday (heat). Always check Navigator app status before walking there."},
   {t:"Selfies at Sea — But Walk-Up Meets Exist",tx:"The scheduled 'Selfies at Sea' sessions are distanced photos only. BUT <strong>traditional walk-up character meets with contact have been confirmed happening</strong> — Snow White and Mickey were spotted in Town Square with no reservation needed. Ask cast members every morning. Characters also wander decks unannounced."},
   {t:"NO Mickey Ice Cream Bars on This Ship",tx:"<strong>Disney Adventure does not have Mickey-shaped ice cream bars</strong>. This surprised every single reviewer. Confirmed missing by multiple passengers. Do not tell the kids to expect it. Soft serve in Toy Story Place is your substitute."},
   {t:"Pixie Dusting = Real Theft Risk",tx:"On Disney Adventure, the door gift exchange is called 'Pixie Dusting.' Multiple maiden voyage passengers had items stolen from corridor pouches. <strong>Disney is not liable</strong> — it's unofficial. Use a small lockable pouch and don't leave anything valuable. CCTV helped some guests recover items."},
@@ -532,7 +531,7 @@ const GEMS = [
   {t:"In-Room Bacha Coffee — Use It",tx:"Your cabin has complimentary <strong>Bacha Coffee and TWG Tea</strong> with a Bacha kettle. Multiple passengers said it was so good they couldn't return to home coffee. Use it every morning before heading out. Saves queuing at Cove Café."},
   {t:"Ship Is 342m Long — Buffer 15 Minutes",tx:"<strong>Allow 10-15 min walking time between any two areas.</strong> Real passengers got lost repeatedly — lower ceilings create disorientation. Navigation anchor: Disney Imagination Garden (Deck 10) is the heart of the ship. Use it to reorient whenever confused."},
   {t:"Free WiFi: WhatsApp + iMessage Only",tx:"Ship WiFi covers <strong>WhatsApp, iMessage, and Navigator app for free</strong>. You only need to buy a package for web browsing, social media, or streaming. The free tier is enough to coordinate with your wife between activities."},
-  {t:"Room Service Breakfast (Free)",tx:"Order via app the night before for morning delivery. <strong>Free — tip only</strong> (~USD 3-5). Kids wake up to food at the cabin door. One of the most practical low-cost wins on the ship."},
+  {t:"Room Service — There's a Delivery Fee",tx:"Room service has a <strong>per-order delivery fee</strong> on top of the tip — it is not free. Convenient for cabin breakfast but budget for it. Check the current fee with guest services on boarding day."},
   {t:"Free Soft Serve in Toy Story Place",tx:"Soft serve machines in Toy Story Place are <strong>self-serve and free</strong>. Your kids will locate them within 15 minutes of boarding. It becomes a religion by Day 2. Note: NOT Mickey-bar shaped. There are no Mickey bars on this ship."},
   {t:"Quick-Service Hidden Gems Beyond Pixar Market",tx:"Four spots passengers love but miss: <strong>Grandma Tala's</strong> (buttermilk fried chicken + fries — best casual food on ship), <strong>Cosmic Kebabs</strong> (lamb shawarma), <strong>Mowgli's</strong> (butter chicken and naan), <strong>Tiana's Bayou</strong> (beignets, cold brew for a fee, hidden forest seating inside the bar — bring the 9yo here). All included in fare except cold brew."},
 ];
@@ -749,7 +748,7 @@ function KidsTab() {
         <ul className="lst" style={{marginTop:'10px'}}>
           <li><div className="dot dr" /><strong>Ironcycle: 9yo only (120cm exact minimum, confirmed).</strong> 2 per car, inline. Closed-toe secured shoes required.</li>
           <li><div className="dot dg" /><strong>Pym Quantum Racers + Groot Galaxy Spin: all 3 kids ride.</strong> 5yo (90cm) needs a parent in the car — take turns.</li>
-          <li><div className="dot dbl" /><strong>Book via Navigator app immediately on boarding.</strong> Marvel Landing is the most in-demand area on the ship.</li>
+          <li><div className="dot dbl" /><strong>Ironcycle is walk-up only — no app booking needed.</strong> Queue at Deck 19 by 0930 when it opens ~1000. Closed-toe secured shoes required. Check Navigator app status before walking there.</li>
           <li><div className="dot dg" />Best time: <strong>0830 on any sea day.</strong> Shortest queue of the entire cruise.</li>
           <li><div className="dot dr" />Ironcycle was not running on the maiden voyage (March 2026) but confirmed operational shortly after. Check Navigator app status on boarding day.</li>
         </ul>
@@ -832,10 +831,10 @@ function DaysTab() {
         <TB t="1015" tx="Arrive MBCC. Drop checked bags with kerb porter — tip SGD 3–5. You won't see bags until 1600–1800." note="Label bags first" nc="tg" />
         <TB t="1045" tx="Terminal check-in, security, boarding lounge. Keep carry-on with meds, swimwear, charger, passports." />
         <TB t="1245" tx="BOARD. Take the ship photo at the gangway. They use it all cruise." type="cr" note="Board!" nc="tr" />
-        <TB t="1300" tx="🔥 APP SPRINT — open Navigator immediately. Book: Iron Cycle (9yo + 7yo), character meets, shows, AquaMouse. 15 minutes. Go." type="cr" note="Highest-value 15 min of trip" nc="tr" />
+        <TB t="1300" tx="🔥 APP SPRINT — open Navigator immediately. Book: character meets, shows, Pym Quantum Racers, Groot Galaxy Spin. Ironcycle is walk-up. 15 minutes. Go." type="cr" note="Highest-value 15 min of trip" nc="tr" />
         <TB t="1330" tx="Light bite at Cabanas. Quick. Free." />
         <TB t="1400" tx="Cabin opens. 20 mins: set up door magnets + Fish Extender bag with the kids. Make it a mission." type="te" note="Door setup" nc="tt" />
-        <TB t="1430" tx="Swimwear on. Pool and AquaMouse before the afternoon surge." type="pk" />
+        <TB t="1430" tx="Swimwear on. Pool and water slides before the afternoon surge." type="pk" />
         <TB t="1530" tx="E-Muster via app — complete before 1630 or you miss the Sail Away party. Takes 10 min." type="cr" note="Mandatory" nc="tr" />
         <TB t="1630" tx="🎉 SAIL AWAY PARTY. All 5 on deck. Mickey, crew, confetti, Singapore skyline shrinking into the distance. Non-negotiable." type="pk" note="Don't miss" nc="tp" />
         <TB t="1800" tx="Rotational Dinner Night 1. Check Navigator for your restaurant assignment." type="te" />
@@ -856,7 +855,7 @@ function DaysTab() {
         <TB t="1630" tx="Rest. Cabin quiet time. 30 min is the minimum. Don't skip this." />
         <TB t="1800" tx="Rotational Dinner Night 2." type="te" />
         <TB t="1930" tx="🌊 Seas the Adventure OR ✨ Remember (WALL-E) at Walt Disney Theatre, Deck 7 Forward. FRONT rows for best effects (snow + confetti). No photo/recording." type="pk" note="Front rows for effects" nc="tp" />
-        <TB t="2130" tx="Kids to bed. Order room service breakfast via app for tomorrow (free — tip only)." />
+        <TB t="2130" tx="Kids to bed. Order room service breakfast via app for tomorrow (delivery fee applies — tip on top)." />
       </DayCard>
 
       <DayCard n={3} cls="dn3" title="🎆 Sea Day 2" sub="Captain Jack show · Rest HARD · Lion King fireworks at sea">
@@ -881,11 +880,11 @@ function DaysTab() {
         <TB t="0700" tx="Breakfast. Slow morning. Let the kids feel it." />
         <TB t="0800" tx="🛍️ SHOP NOW. Ship-exclusive merch sells out on the last sea day. Mickey ears, Spirit Jerseys (kids' sizes go first), Dooney bags, pin sets. First pick." type="cr" note="Go early" nc="tr" />
         <TB t="0930" tx="Last character meets. Kids are not exhausted yet — best photos of the trip." type="pk" />
-        <TB t="1100" tx="Final pool session. Last AquaMouse run. Let the kids feel 'last time' without narrating it." />
+        <TB t="1100" tx="Final pool session. Last water slide run. Let the kids feel 'last time' without narrating it." />
         <TB t="1300" tx="Lunch. Let the kids order their single favourite thing they've eaten all cruise." />
         <TB t="1330" tx="👑 Bibbidi Bobbidi Boutique — your 9yo's main event. ~90 min. She exits as a princess." type="pk" note="Book in advance" nc="tp" />
         <TB t="1530" tx="Pack non-essentials. Label all luggage. Bags must be outside cabin door by 2200 tonight." type="cr" note="Bags out by 2200" nc="tr" />
-        <TB t="1700" tx="Final dip. Final soft-serve. Final AquaMouse if queue allows." />
+        <TB t="1700" tx="Final dip. Final soft-serve. Final water slide if queue allows." />
         <TB t="1800" tx="🎬 Gala / Farewell Dinner at 1923. Semi-formal. The fancy night. Kids look unreal in proper clothes." type="te" note="Dress code" nc="tg" />
         <TB t="1930" tx="Farewell show at the theatre. Bring something to wipe your eyes. It ends with Mickey waving goodbye." type="pk" />
         <TB t="2100" tx="Last deck walk. Stars above. Ocean below. Silence. Do not skip this." type="te" />
@@ -982,7 +981,7 @@ function ShowsTab() {
           <li><div className="dot dr" />Avoid extreme side seats — lighting and projection effects are centre-weighted.</li>
           <li><div className="dot dbl" />Kids on aisle seats. The first 3 rows are too close for shows with ceiling projections.</li>
           <li><div className="dot dg" />Second show = same quality, 40% fewer people. Always prefer the second showing unless you need an early night.</li>
-          <li><div className="dot dr" />For Lion King fireworks: arrive 30-45 min early. Upper deck, stern-facing. Railing spots go FAST — only fireworks show at sea on any cruise ship worldwide.</li>
+          <li><div className="dot dr" />For Lion King fireworks: <strong>Deck 18/19 right side near the waterslide staircase</strong> (confirmed May 2026 — NOT stern). Arrive 30-45 min early. Only fireworks show at sea on any cruise ship worldwide.</li>
         </ul>
       </div>
     </div>
@@ -1082,10 +1081,11 @@ function SecretsTab() {
       <div className="shdr">🏠 Door Decor Rules</div>
       <div className="card">
         <ul className="lst">
-          <li><div className="dot dg" /><strong>Magnets only.</strong> No tape, no adhesives — they damage the door coating and staff will remove them.</li>
-          <li><div className="dot dg" />Print designs, laminate, attach adhesive magnets to back. SGD 15–20 total from Shopee or Daiso.</li>
-          <li><div className="dot dbl" />Popular: family name + cabin number, kids' favourite character, pirate theme for Night 3.</li>
-          <li><div className="dot dbl" />Magnetic hook on door = Fish Extender bag. You'll receive gifts from neighbours daily.</li>
+          <li><div className="dot dg" /><strong>Magnets only.</strong> No tape, adhesives, or gel stickers. Door damage carries a <strong>USD 100 repair fee</strong> effective June 3.</li>
+          <li><div className="dot dr" /><strong>Over-the-door organizers are now banned</strong> (June 3 policy). Decorations on the door face only — not hallway walls or ceilings. No sound or video decorations.</li>
+          <li><div className="dot dg" />Print designs, laminate, attach adhesive magnets to back. SGD 15–20 from Shopee or Daiso.</li>
+          <li><div className="dot dbl" />Popular: family name + cabin number, kids' favourite characters, adventure/ocean theme.</li>
+          <li><div className="dot dbl" />Fish Extender pouch on a magnetic hook is still fine — it is not an over-door organizer.</li>
         </ul>
       </div>
     </div>
@@ -1198,7 +1198,7 @@ export default function App() {
             <span className="pill pr">🔴 Iron Cycle</span>
             <span className="pill pb">🎭 5 Shows</span>
             <span className="pill pp">👑 BBB</span>
-            <span className="pill pg">🎢 AquaMouse</span>
+            <span className="pill pb">💧 Water Slides</span>
           </div>
         </div>
 
