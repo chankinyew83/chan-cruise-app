@@ -24,7 +24,24 @@ const store = {
 };
 
 const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Cinzel+Decorative:wght@700&family=Nunito:wght@400;600;700;800&display=swap');
+@font-face{font-family:'Pacifico';font-style:normal;font-display:swap;font-weight:400;
+  src:url(https://cdn.jsdelivr.net/fontsource/fonts/pacifico@latest/latin-400-normal.woff2) format('woff2'),
+      url(https://cdn.jsdelivr.net/fontsource/fonts/pacifico@latest/latin-400-normal.woff) format('woff');}
+@font-face{font-family:'Cinzel Decorative';font-style:normal;font-display:swap;font-weight:700;
+  src:url(https://cdn.jsdelivr.net/fontsource/fonts/cinzel-decorative@latest/latin-700-normal.woff2) format('woff2'),
+      url(https://cdn.jsdelivr.net/fontsource/fonts/cinzel-decorative@latest/latin-700-normal.woff) format('woff');}
+@font-face{font-family:'Nunito';font-style:normal;font-display:swap;font-weight:400;
+  src:url(https://cdn.jsdelivr.net/fontsource/fonts/nunito@latest/latin-400-normal.woff2) format('woff2'),
+      url(https://cdn.jsdelivr.net/fontsource/fonts/nunito@latest/latin-400-normal.woff) format('woff');}
+@font-face{font-family:'Nunito';font-style:normal;font-display:swap;font-weight:600;
+  src:url(https://cdn.jsdelivr.net/fontsource/fonts/nunito@latest/latin-600-normal.woff2) format('woff2'),
+      url(https://cdn.jsdelivr.net/fontsource/fonts/nunito@latest/latin-600-normal.woff) format('woff');}
+@font-face{font-family:'Nunito';font-style:normal;font-display:swap;font-weight:700;
+  src:url(https://cdn.jsdelivr.net/fontsource/fonts/nunito@latest/latin-700-normal.woff2) format('woff2'),
+      url(https://cdn.jsdelivr.net/fontsource/fonts/nunito@latest/latin-700-normal.woff) format('woff');}
+@font-face{font-family:'Nunito';font-style:normal;font-display:swap;font-weight:800;
+  src:url(https://cdn.jsdelivr.net/fontsource/fonts/nunito@latest/latin-800-normal.woff2) format('woff2'),
+      url(https://cdn.jsdelivr.net/fontsource/fonts/nunito@latest/latin-800-normal.woff) format('woff');}
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --navy:#00111f;--blue:#0B3D91;--blue2:#1455C0;
@@ -1574,6 +1591,10 @@ function CaptainsPanel({ setUserIntel, onClose, showToast }) {
 
   const extract = async () => {
     if (!inputText.trim()) return;
+    if (!navigator.onLine) {
+      setError('No internet connection. Connect to WiFi and try again.');
+      return;
+    }
     setMode('extracting'); setError(null);
     const sysPrompt = `You are a cruise intelligence analyst for Disney Adventure (Singapore). Extract specific actionable factual claims from the passenger report. Return a JSON array ONLY. No prose. No markdown fences.
 
@@ -1596,15 +1617,22 @@ Rules: Extract ONLY from the provided text. No invention or extrapolation. Skip 
         }
         data = await res.json();
       } else {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({
-            model:'claude-sonnet-4-20250514', max_tokens:1000,
-            system: sysPrompt,
-            messages:[{role:'user', content:inputText.trim()}],
-          })
-        });
-        data = await res.json();
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 8000);
+        try {
+          const res = await fetch('https://api.anthropic.com/v1/messages', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            signal: ctrl.signal,
+            body: JSON.stringify({
+              model:'claude-sonnet-4-20250514', max_tokens:1000,
+              system: sysPrompt,
+              messages:[{role:'user', content:inputText.trim()}],
+            })
+          });
+          data = await res.json();
+        } finally {
+          clearTimeout(timer);
+        }
       }
       const raw = data.content?.find(b => b.type==='text')?.text || '[]';
       const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
@@ -2166,6 +2194,15 @@ export default function App() {
       return true;
     } catch { return false; }
   };
+
+  useEffect(() => {
+    const el = document.querySelector('.starfield');
+    const handler = () => {
+      if (el) el.style.animationPlayState = document.hidden ? 'paused' : 'running';
+    };
+    document.addEventListener('visibilitychange', handler);
+    return () => document.removeEventListener('visibilitychange', handler);
+  }, []);
 
   const startLongPress = () => {
     heroLongPressTimer.current = setTimeout(() => setCaptainOpen(true), 800);
