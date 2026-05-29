@@ -792,6 +792,9 @@ function KidsTab() {
           <li><div className="dot dr" />The 9yo's best formal character moment: schedule a "Disney Royals" Selfies at Sea session — princesses in a group setting. Then supplement with whatever walk-up meets appear.</li>
         </ul>
       </div>
+    </div>
+  );
+}
 
 function ChecklistTab({ checks, setChecks }) {
   const total = CHECKLIST_ITEMS.flatMap(c=>c.items).length;
@@ -874,6 +877,7 @@ function DaysTab() {
         <TB t="1930" tx="⚔️ Captain Jack Sparrow & The Siren Queen at Garden Stage — guests hunt treasure with Jack. Real confirmed show. Not a Pirate Night event." type="cr" />
         <TB t="2030" tx='🎆 "THE LION KING: CELEBRATION IN THE SKY" — the only fireworks show at sea on ANY cruise ship worldwide. Face the stern. From a moving ship. Over the ocean. Nothing else competes.' type="cr" note="Only fireworks at sea on Earth" nc="tr" />
         <TB t="2130" tx="Kids crash immediately. You: quiet drink at Taverna Portorosso or Wayfinder Bay." />
+      </DayCard>
 
       <DayCard n={4} cls="dn4" title="✨ Sea Day 3" sub="Shop early · BBB · Farewell magic">
         <TB t="0600" tx="Final early deck walk. Last morning at sea. This one hits differently — savour it." type="te" />
