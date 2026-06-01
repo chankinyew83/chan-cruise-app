@@ -483,11 +483,11 @@ const SHOWS = [
 
 const CHECKLIST_ITEMS = [
   {cat:"⚡ Do Now (Booking Window Opens)",items:[
-    {t:"Download Disney Cruise Line Navigator app",s:"iOS or Android — your command centre for all 4 nights"},
-    {t:"Complete Online Check-In for all 5 family members",s:"Upload passport photos. Unlocks earlier boarding slot."},
+    {t:"Download Disney Cruise Line Navigator app",s:"iOS or Android — download at least 60 days out. Your command centre for all 4 nights."},
+    {t:"Complete Online Check-In for all 5 family members",s:"Opens 30 days before sailing (first-time cruisers). Upload passport photos, select Port Arrival Time — earliest slot = most ship time."},
     {t:"Book Port Arrival Time (PAT)",s:"Earliest slot = longest day on ship. Go for 11am window."},
-    {t:"Pre-register kids for Oceaneer Club",s:"Do this in app now — skip the queue on boarding day"},
-    {t:"Set alarm for character meet booking window",s:"Midnight SG time on your booking window day. Characters go FAST."},
+    {t:"Pre-register kids for Oceaneer Club via DCL website",s:"Online Check-In tab → up to 3 days before sail. Or register at Youth Clubs Open House on embarkation day."},
+    {t:"Pre-book select activities via DCL website",s:"First-time cruisers: window opens 75 days before sail. BBB and character sessions go fast — book the moment your window opens."},
     {t:"Book Bibbidi Bobbidi Boutique for your 9yo",s:"Princess makeover. Sells out weeks before sailing. Non-negotiable."},
     {t:"Book Palo (optional adults-only dinner)",s:"If you want 1 night just the two of you — kids go to Oceaneer Club"},
   ]},
@@ -934,7 +934,8 @@ function KidsTab({ ridden, setRidden }) {
         { id:'oceaneer', icon:'🏰', label:'Oceaneer Club', badge:'Ages 3–10 · Included',
           content: <ul className="lst">
             <li>Disney, Pixar, Marvel and Star Wars themed zones. Supervised. Included in fare.</li>
-            <li><strong>Pre-register in Navigator app before boarding</strong> — walk in Day 1 without queuing.</li>
+            <li><strong>Pre-register via DCL website (Online Check-In) up to 3 days before sail</strong> — or register at Youth Clubs Open House on embarkation day. Check Navigator app for Open House times once onboard.</li>
+            <li>Each registered child receives a <strong>MagicBand wristband</strong> for tap in/tap out at the club entrance.</li>
             <li><strong>Kids never want to leave.</strong> Use it for 1.5–2 hrs of adult time on sea days.</li>
             <li>Check-in and out anytime. Snacks provided.</li>
           </ul>
