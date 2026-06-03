@@ -450,8 +450,8 @@ const SHOWS = [
     book:"No booking. Be at the Garden Stage at 1600 to claim space.",
     km:"🌟🌟🌟🌟🌟",dnm:true,conf:"verified",src:"Passenger confirmations Mar 2026"},
   {name:"Avengers Assemble!",type:"Deck Show · Marvel Landing",em:"⚡",dur:"~30 min",
-    desc:"Confirmed Marvel deck event. Live characters, effects, superhero action. Your 7 and 9yo will be completely locked in.",
-    when:"Check Navigator app. Typically daytime or early evening sea days.",
+    desc:"Confirmed Marvel deck event. Live characters, effects, superhero action. Your 7 and 9yo will be completely locked in. Worth watching twice — confirmed passengers did exactly that on Day 3 and Day 4.",
+    when:"Runs on multiple days — confirmed Day 3 and Day 4. Check Navigator app for all showings. Worth watching twice.",
     seat:"Marvel Landing area, Deck 19. Arrive 20 min early. Centre stage position.",
     book:"No booking. Navigator app for time.",
     km:"🌟🌟🌟🌟🌟",dnm:true,conf:"reported",src:"Confirmed Marvel deck event, passenger reports Mar 2026"},
@@ -562,10 +562,10 @@ const GEMS = [
     tx:"<strong>No app reservations — just queue up.</strong> Opens ~0930–1000. May 2026 passengers waited ~1 hour at peak. Best strategy: arrive at Deck 19 by 0930 for first run, or try during first dinner seating (~1800) when crowds drop. <strong>Closed-toe secured shoes required — barefoot or slippers get you turned away.</strong> Downtime peaks midday (heat). Always check Navigator app status before walking there.",
     conf:"verified",src:"Facebook group May 2026",
     verified_date:"2026-05-24",stale_after_days:60,tags:["ironcycle","marvel","rides","shoes"]},
-  {id:"gem_003",category:"characters",t:"Selfies at Sea — But Walk-Up Meets Exist",
-    tx:"The scheduled 'Selfies at Sea' sessions are distanced photos only. BUT <strong>traditional walk-up character meets with contact have been confirmed happening</strong> — Snow White and Mickey were spotted in Town Square with no reservation needed. Ask cast members every morning. Characters also wander decks unannounced.",
-    conf:"reported",src:"Passengers Mar–Apr 2026",
-    verified_date:"2026-04-10",stale_after_days:60,tags:["characters","meets","selfies","walk-up"]},
+  {id:"gem_003",category:"characters",t:"Character Slots Open All Sailing — Not Just Day 1",
+    tx:"Book 'Disney Royals' and 'Disney Pals' on boarding day, but <strong>new slots open throughout the 4-day sailing</strong> — confirmed by a family who caught nearly every character. Last day especially active with roaming characters. <strong>Join your sailing's WhatsApp group</strong> (formed in the Facebook sailing group) — passengers alert each other to open slots and surprise sightings in real time.",
+    conf:"reported",src:"Passenger Jun 2026, passengers Mar–Apr 2026",
+    verified_date:"2026-06-04",stale_after_days:60,tags:["characters","meets","slots","whatsapp"]},
   {id:"gem_004",category:"dining",t:"NO Mickey Ice Cream Bars on This Ship",
     tx:"<strong>Disney Adventure does not have Mickey-shaped ice cream bars</strong>. This surprised every single reviewer. Confirmed missing by multiple passengers. Do not tell the kids to expect it. Soft serve in Toy Story Place is your substitute.",
     conf:"verified",src:"Confirmed across multiple sailings Mar–Apr 2026",
@@ -578,6 +578,10 @@ const GEMS = [
     tx:"<strong>Disney Adventure has no Pirate Night</strong> — confirmed by PlanDisney (official Disney panel, March 2026). Captain Jack Sparrow & The Siren Queen is a real confirmed deck show but it is not a ship-wide themed night. No costume dinner, no special menu.",
     conf:"verified",src:"PlanDisney official Q&A Mar 2026",
     verified_date:"2026-03-03",stale_after_days:365,tags:["pirate","expectations","packing","planning"]},
+  {id:"gem_005c",category:"dining",t:"Can't Find Merch? Ask a Bar",
+    tx:"When specific items sell out in the shops (<strong>Evil Queen bottle, Hei Hei plush</strong> were both missing from retail in May 2026), passengers tracked them down by asking bar staff directly. One passenger found the last Hei Hei plush displayed at a ship bar. If the shops are out, ask at any bar counter.",
+    conf:"reported",src:"B2B passenger May 18–21 2026",
+    verified_date:"2026-05-21",stale_after_days:60,tags:["merch","bar","sold-out","tip"]},
   {id:"gem_006",category:"shows",t:"Front Rows Are Best for Theatre Shows",
     tx:"Ignore guides saying rows 5-12. <strong>Real passengers confirm: FRONT rows are best</strong> for 'Seas the Adventure' and 'Remember' — that's where snow and confetti effects land. No photography or recording in the Walt Disney Theatre. Arrive 20-25 min early.",
     conf:"verified",src:"Multiple passenger confirmations Mar–Apr 2026",
@@ -607,9 +611,13 @@ const GEMS = [
     conf:"reported",src:"Multiple passengers Mar–Apr 2026",
     verified_date:"2026-04-01",stale_after_days:120,tags:["soft-serve","free","toy-story-place","kids"]},
   {id:"gem_013",category:"dining",t:"Quick-Service Hidden Gems Beyond Pixar Market",
-    tx:"Four spots passengers love but miss: <strong>Grandma Tala's</strong> (buttermilk fried chicken + fries — best casual food on ship), <strong>Cosmic Kebabs</strong> (lamb shawarma), <strong>Mowgli's</strong> (butter chicken and naan), <strong>Tiana's Bayou</strong> (beignets, cold brew for a fee — bring the kids here). All included in fare except cold brew.",
-    conf:"reported",src:"Tiffany Q. Liu B2B Mar–Apr 2026",
-    verified_date:"2026-04-02",stale_after_days:120,tags:["food","quick-service","dining","hidden"]},
+    tx:"Five spots passengers love but miss: <strong>Grandma Tala's</strong> (buttermilk fried chicken + fries — best casual food on ship), <strong>Cosmic Kebabs</strong> (lamb shawarma), <strong>Mowgli's</strong> (butter chicken and naan), <strong>Tiana's Bayou</strong> (beignets, cold brew for a fee), <strong>Pizza Planet</strong> (multiple passengers rate this as best casual food — worth queuing for, near Toy Story Place). All included in fare except cold brew.",
+    conf:"reported",src:"Tiffany Q. Liu B2B Mar–Apr 2026 + passengers Jun 2026",
+    verified_date:"2026-06-04",stale_after_days:120,tags:["food","quick-service","dining","hidden"]},
+  {id:"gem_014",category:"rides",t:"Deck 19 Pool — Only One With Swim Space",
+    tx:"The main pools fill up and get extremely crowded — one passenger described them as 'packed like human soup.' <strong>Deck 19 pool is the only one where you can actually swim.</strong> For the boys to properly play in water, head to Deck 19, not the main pools.",
+    conf:"reported",src:"B2B passenger May 18–21 2026",
+    verified_date:"2026-05-21",stale_after_days:90,tags:["pool","swimming","deck-19","crowds"]},
 ];
 
 // Lightweight schedule for NOW bar
@@ -936,6 +944,7 @@ function KidsTab({ ridden, setRidden }) {
             <li>Disney, Pixar, Marvel and Star Wars themed zones. Supervised. Included in fare.</li>
             <li><strong>Pre-register via DCL website (Online Check-In) up to 3 days before sail</strong> — or register at Youth Clubs Open House on embarkation day. Check Navigator app for Open House times once onboard.</li>
             <li>Each registered child receives a <strong>MagicBand wristband</strong> for tap in/tap out at the club entrance.</li>
+            <li><strong>Characters make appearances inside the club</strong> — confirmed by multiple families including a 5yo who loved it. A separate reason to use it beyond adult time.</li>
             <li><strong>Kids never want to leave.</strong> Use it for 1.5–2 hrs of adult time on sea days.</li>
             <li>Check-in and out anytime. Snacks provided.</li>
           </ul>
@@ -943,8 +952,9 @@ function KidsTab({ ridden, setRidden }) {
         { id:'water', icon:'💦', label:'Water Slides', badge:'Toy Story Place · Decks 17–19',
           content: <ul className="lst">
             <li>Large family pool, water slides, whirlpools, and splash pads. <strong>Not AquaMouse</strong> — that's on Disney Wish.</li>
+            <li><strong>Deck 19 pool is the only one with room to actually swim.</strong> The main pools get extremely crowded. If the boys want to get in the water, go to Deck 19.</li>
             <li>Splash pads ideal for the 5yo. Water slides for the 7 and 9yo.</li>
-            <li>Go at <strong>0800–0900</strong> on sea days for minimal queues.</li>
+            <li>Go at <strong>0800–0900</strong> on sea days for minimal queues. Waterslide had almost no queue on Day 3 afternoon.</li>
             <li>Pixar Market is steps away on Deck 17 — easiest lunch on sea days.</li>
           </ul>
         },
@@ -952,8 +962,9 @@ function KidsTab({ ridden, setRidden }) {
           content: <ul className="lst">
             <li><strong>Selfies at Sea is the default</strong> — distanced photos, no hugs. Disney partially rolled this back after backlash.</li>
             <li>As of April 2026: <strong>hybrid system</strong> — some sessions distanced, others reverted to walk-up with contact. Ask cast members each morning.</li>
-            <li>Book "Disney Royals" (princesses) and "Disney Pals" (Mickey/Minnie/Goofy) via Navigator app on boarding day.</li>
-            <li>Characters wander decks unannounced. Keep Navigator app open for live alerts.</li>
+            <li>Book "Disney Royals" (princesses) and "Disney Pals" (Mickey/Minnie/Goofy) via Navigator app on boarding day — but <strong>new slots open throughout the sailing.</strong> Check the app every morning, not just Day 1.</li>
+            <li>Characters wander decks unannounced — especially on <strong>the last day.</strong> Keep Navigator app open for live alerts.</li>
+            <li><strong>Pro move:</strong> Join your sailing's WhatsApp group (formed in the Facebook sailing group before boarding). Guests alert each other to open slots and surprise character sightings in real time.</li>
             <li>Your birthday girl's best formal moment: "Disney Royals" session. Boys go to "Disney Pals" at the same time.</li>
           </ul>
         },
@@ -1155,7 +1166,7 @@ function DaysTab({ cruiseDay, setCruiseDay, heatMode, setHeatMode }) {
         <TB t="1245" tx="BOARD. Take the ship photo at the gangway. They use it all cruise." type="cr" note="Board!" nc="tr" />
         <TB t="1300" tx="🔥 APP SPRINT — open Navigator immediately. Book: character meets, shows, Pym Quantum Racers, Groot Galaxy Spin. Ironcycle is walk-up. 15 minutes. Go." type="cr" note="Highest-value 15 min of trip" nc="tr" />
         <TB t="1330" tx="Light bite at Pixar Market (Deck 17). Quick. Free." />
-        <TB t="1400" tx="Cabin opens. 20 mins: set up door magnets + Fish Extender bag with the kids. Make it a mission." type="te" note="Door setup" nc="tt" />
+        <TB t="1400" tx="Cabin opens. 20 mins: set up door magnets with the kids. Make it a mission." type="te" note="Door setup" nc="tt" />
         <TB t="1430" tx="Swimwear on. Pool and water slides before the afternoon surge." type="pk" />
         <TB t="1530" tx="E-Muster via app — complete before 1630 or you miss the Sail Away party. Takes 10 min." type="cr" note="Mandatory" nc="tr" />
         <TB t="1630" tx="🎉 SAIL AWAY PARTY. All 5 on deck. Mickey, crew, confetti, Singapore skyline shrinking into the distance. Non-negotiable." type="pk" note="Don't miss" nc="tp" />
@@ -1174,7 +1185,7 @@ function DaysTab({ cruiseDay, setCruiseDay, heatMode, setHeatMode }) {
         <TB t="1000" tx="⚠️ HEAT WARNING: By 1000 the open decks get brutal in Singapore humidity. Real passengers report upper deck becomes a ghost town by midday. Plan all outdoor activities before 1000 or after 1700." type="cr" note="Real passenger warning" nc="tr" />
         <TB t="1100" tx="Collect kids. Water slides at Toy Story Place (Decks 17-19). Go before the 1130 crowd peak." />
         <TB t="1300" tx="Lunch. Pixar Market (Deck 17, near slides) is fastest and most convenient." />
-        <TB t="1430" tx="⭐ Selfies at Sea session (book via Navigator) OR check for walk-up meets. Ask cast members about unscheduled character appearances." type="cr" note="Check app for walk-ups" nc="tr" />
+        <TB t="1430" tx="⭐ Selfies at Sea session (book via Navigator) OR check for walk-up meets. Ask cast members about unscheduled character appearances. Check WhatsApp sailing group for live sighting alerts." type="cr" note="Check app + WhatsApp" nc="tr" />
         <TB t="1630" tx="Rest. Cabin quiet time. 30 min is the minimum. Don't skip this." />
         <TB t="1800" tx="Rotational Dinner Night 2." type="te" />
         <TB t="1930" tx="🌊 Seas the Adventure OR ✨ Remember (WALL-E) at Walt Disney Theatre, Deck 7 Forward. FRONT rows for best effects (snow + confetti). No photo/recording." type="pk" note="Front rows for effects" nc="tp" />
@@ -1204,8 +1215,8 @@ function DaysTab({ cruiseDay, setCruiseDay, heatMode, setHeatMode }) {
         defaultOpen={cruiseDay===4} isPast={cruiseDay>4}>
         <TB t="0600" tx="Final early deck walk. Last morning at sea. This one hits differently — savour it." type="te" />
         <TB t="0700" tx="Breakfast. Slow morning. Let the kids feel it." />
-        <TB t="0800" tx="🛍️ SHOP NOW. Ship-exclusive merch sells out on the last sea day. Mickey ears, Spirit Jerseys (kids' sizes go first), Dooney bags, pin sets. First pick." type="cr" note="Go early" nc="tr" />
-        <TB t="0930" tx="Last character meets. Kids are not exhausted yet — best photos of the trip." type="pk" />
+        <TB t="0800" tx="🛍️ SHOP NOW. Ship-exclusive merch sells out on the last sea day. Mickey ears, Spirit Jerseys (kids' sizes go first), Dooney bags, pin sets. First pick. If something is sold out in the shops, ask bar staff — passengers have found items there." type="cr" note="Go early" nc="tr" />
+        <TB t="0930" tx="Last character meets. Kids are not exhausted yet — best photos of the trip. Check WhatsApp group for any roaming character sightings — last day is most active for unannounced appearances." type="pk" />
         <TB t="1100" tx="Final pool session. Last water slides run. Let the kids feel 'last time' without narrating it." />
         <TB t="1300" tx="Lunch. Let the kids order their single favourite thing they've eaten all cruise." />
         <TB t="1330" tx="👑 Bibbidi Bobbidi Boutique — your birthday girl's main event. ~90 min. She exits as a princess. Send the boys to Oceaneer Club." type="pk" note="Book in advance" nc="tp" />
@@ -1362,6 +1373,7 @@ function PackTab({ packed, setPacked }) {
           <li><div className="dot dg" />Limited pin sets — buy the set, not individual pins, for better value.</li>
           <li><div className="dot dbl" />Glow merch for Lion King fireworks night — light-up wands, headbands. Buy Day 1 afternoon.</li>
           <li><div className="dot dbl" />Last night (Day 4 evening): some items quietly discounted 15–25% to clear stock. Final sweep.</li>
+          <li><div className="dot dg" /><strong>If something is sold out in the shops, ask bar staff.</strong> Passengers have found specific items (plushies, bottles) displayed at ship bars when retail was empty.</li>
         </ul>
       </div>
     </div>
@@ -1383,6 +1395,68 @@ function SecretsTab({ userIntel = [] }) {
 
   return (
     <div className="content">
+
+      {/* ── Pixie Dusting Partner Explainer ── */}
+      <div style={{background:'linear-gradient(135deg,rgba(124,58,237,.12) 0%,rgba(20,8,48,.6) 100%)',
+        border:'1px solid rgba(124,58,237,.3)',borderRadius:'14px',padding:'14px',marginBottom:'14px'}}>
+        <div style={{fontFamily:"'Cinzel Decorative','Times New Roman',serif",fontSize:'10px',
+          color:'#c4b5fd',letterSpacing:'2px',textTransform:'uppercase',marginBottom:'10px'}}>
+          ✦ Pixie Dusting — Partner Explainer
+        </div>
+
+        <div style={{background:'rgba(0,0,0,.25)',borderRadius:'10px',padding:'11px 12px',marginBottom:'10px'}}>
+          <div style={{color:'var(--gold)',fontSize:'12px',fontWeight:800,marginBottom:'5px'}}>What is it?</div>
+          <div style={{color:'rgba(255,255,255,.75)',fontSize:'12px',lineHeight:1.6}}>
+            A guest tradition — <strong style={{color:'#fff'}}>not run by Disney.</strong> Some passengers leave small surprise gifts (stickers, keychains, sweets) in a pouch hung on cabin doors. That's it. There is no obligation to give anything back.
+          </div>
+        </div>
+
+        <div style={{background:'rgba(0,0,0,.25)',borderRadius:'10px',padding:'11px 12px',marginBottom:'10px'}}>
+          <div style={{color:'var(--gold)',fontSize:'12px',fontWeight:800,marginBottom:'5px'}}>Fish Extender vs Pixie Dusting</div>
+          <div style={{color:'rgba(255,255,255,.75)',fontSize:'12px',lineHeight:1.6}}>
+            <strong style={{color:'#fff'}}>Fish Extender (FE)</strong> — a formal mutual exchange organised before sailing in a Facebook group. You sign up, get a list of 5–10 cabins, and commit to giving AND receiving. <span style={{color:'#ff8091',fontWeight:700}}>We are not signed up.</span>
+            <br/><br/>
+            <strong style={{color:'#fff'}}>Pixie Dusting</strong> — random, one-way surprise gifts left by strangers. No sign-up, no list, no obligation whatsoever. If someone leaves something at our door, the kids keep it. Full stop.
+          </div>
+        </div>
+
+        <div style={{background:'rgba(45,138,74,.1)',border:'1px solid rgba(45,138,74,.25)',
+          borderRadius:'10px',padding:'11px 12px',marginBottom:'10px'}}>
+          <div style={{color:'#6ddb80',fontSize:'12px',fontWeight:800,marginBottom:'6px'}}>Our plan — simple</div>
+          {[
+            ['Are we in an FE group?','No. We did not sign up. Zero obligation.'],
+            ['Do we need to give gifts?','No. Skipping entirely is normal and common.'],
+            ['Kids find gifts in a pouch?','100% theirs to keep. Pixie dust is a one-way gift.'],
+            ['Do we need a door pouch?','Optional. A magnetic hook is fine if kids want one.'],
+            ['What about door decor?','Simple magnets only. Family name + kids\' names is enough.'],
+          ].map(([q,a],i) => (
+            <div key={i} style={{display:'flex',gap:'8px',paddingBottom:i<4?'8px':'0',
+              borderBottom:i<4?'1px solid rgba(255,255,255,.06)':'none',marginBottom:i<4?'8px':'0'}}>
+              <div style={{color:'rgba(255,255,255,.4)',fontSize:'11.5px',flex:'0 0 44%',lineHeight:1.4}}>{q}</div>
+              <div style={{color:'#fff',fontSize:'11.5px',fontWeight:700,flex:1,lineHeight:1.4}}>{a}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{background:'rgba(196,30,58,.08)',border:'1px solid rgba(196,30,58,.2)',
+          borderRadius:'10px',padding:'10px 12px',marginBottom:'10px'}}>
+          <div style={{color:'#ff8091',fontSize:'11.5px',fontWeight:800,marginBottom:'4px'}}>⚠️ Real talk</div>
+          <div style={{color:'rgba(255,255,255,.65)',fontSize:'11.5px',lineHeight:1.6}}>
+            This tradition has escalated on Disney Adventure. Fights and thefts have been reported in the SG sailing group. Disney is not liable — it's entirely unofficial. If the kids hang a pouch, use a small lockable one and keep nothing valuable in it.
+          </div>
+        </div>
+
+        <div style={{background:'rgba(45,138,74,.07)',border:'1px solid rgba(45,138,74,.18)',
+          borderRadius:'10px',padding:'10px 12px'}}>
+          <div style={{color:'rgba(255,255,255,.65)',fontSize:'11.5px',lineHeight:1.6,fontStyle:'italic'}}>
+            "Go easy on door decor and pixie dusting — prioritise your own enjoyment."
+          </div>
+          <div style={{color:'rgba(255,255,255,.28)',fontSize:'10px',marginTop:'4px'}}>
+            — First-time Disney cruiser, family with 5yo, Jun 2026
+          </div>
+        </div>
+      </div>
+
       <div className="hl" style={{marginBottom:'10px'}}>
         💎 Tap any gem to read it. These are what the average tourist misses.
       </div>
@@ -2049,7 +2123,6 @@ const TABS = [
 const TOTAL_CHECK = CHECKLIST_ITEMS.flatMap(c=>c.items).length;
 const TOTAL_PACK = PACKING.flatMap(c=>c.items).length;
 
-// Simple merge: take the union of checked/packed items, latest cruiseDay, union of seenShows
 function mergeStates(local, remote) {
   if (!remote) return local;
   return {
@@ -2229,7 +2302,6 @@ export default function App() {
       <div className="app">
         <div className="starfield" />
 
-        {/* Hero */}
         <div className="hero">
           <div className="hero-glow" />
           <div className="hero-castle">🏰</div>
@@ -2314,7 +2386,7 @@ export default function App() {
               color:'#fff',fontSize:'18px',cursor:'pointer',
               display:'flex',alignItems:'center',justifyContent:'center',
               zIndex:150,boxShadow:'0 4px 20px rgba(196,30,58,.6)',
-              transition:'transform .15s',
+              transition:'transform .15px',
             }}
             title="Emergency information"
           >🆘</button>
